@@ -33,8 +33,9 @@ class _CategoryPageState extends State<CategoryPage> {
   static const _cpuSockets    = ['AM5', 'AM4', 'LGA 1700', 'LGA 1851', 'LGA 1200', 'LGA 1151', 'LGA 1150', 'sTR5'];
   static const _mainSockets   = ['AM5', 'AM4', 'LGA 1700', 'LGA 1851', 'LGA 1200', 'LGA 1151'];
   static const _mainChipsets  = ['B850', 'X870', 'Z890', 'B760', 'Z790', 'X670', 'B650', 'A520', 'B550'];
-  static const _gpuVram       = ['4 GB', '6 GB', '8 GB', '10 GB', '12 GB', '16 GB', '24 GB', '32 GB'];
-  static const _gpuManufacturers = ['NVIDIA', 'AMD', 'Intel'];
+  static const _gpuVram       = ['4.0 GB', '6.0 GB', '8.0 GB', '10.0 GB', '12.0 GB', '16.0 GB', '24.0 GB', '32.0 GB'];
+  static const _gpuManufacturers = ['ASUS', 'MSI', 'Gigabyte', 'ASRock', 'EVGA', 'Sapphire', 'Zotac', 'Inno3D', 'Acer'];
+  static const _mainManufacturers = ['ASUS', 'MSI', 'Gigabyte', 'ASRock', 'Biostar', 'Supermicro'];
 
   String _formatVnd(num value) {
     final str = value.round().toString();
@@ -53,8 +54,16 @@ class _CategoryPageState extends State<CategoryPage> {
     list = list.where((c) {
       if (_inStockOnly && !c.inStock)                           return false;
       if (c.price < _priceRange.start || c.price > _priceRange.end) return false;
-      if (_selectedManufacturers.isNotEmpty &&
-          !_selectedManufacturers.contains(c.manufacturer))    return false;
+      if (_selectedManufacturers.isNotEmpty) {
+        bool matches = false;
+        for (final m in _selectedManufacturers) {
+          if (c.manufacturer == m || c.name.toLowerCase().contains(m.toLowerCase())) {
+            matches = true;
+            break;
+          }
+        }
+        if (!matches) return false;
+      }
 
       // CPU / Mainboard — socket filter
       if (_selectedSockets.isNotEmpty) {
@@ -63,8 +72,8 @@ class _CategoryPageState extends State<CategoryPage> {
 
       // Mainboard — chipset filter
       if (_selectedChipsets.isNotEmpty) {
-        final chipset = c.chipset ?? '';
-        if (!_selectedChipsets.any((ch) => chipset.contains(ch)))     return false;
+        final chipset = (c.chipset ?? c.name).toUpperCase();
+        if (!_selectedChipsets.any((ch) => chipset.contains(ch.toUpperCase()))) return false;
       }
 
       // GPU — VRAM filter
@@ -249,17 +258,18 @@ class _CategoryPageState extends State<CategoryPage> {
           // Manufacturer
           const Text('Hãng sản xuất', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          if (cat == ComponentCategory.gpu)
-            Wrap(
-              spacing: 8, runSpacing: 8,
-              children: _gpuManufacturers.map(_buildManufacturerChip).toList(),
-            )
-          else
+          if (cat == ComponentCategory.cpu)
             Row(children: [
               _buildManufacturerChip('AMD'),
               const SizedBox(width: 8),
               _buildManufacturerChip('Intel'),
-            ]),
+            ])
+          else
+            Wrap(
+              spacing: 8, runSpacing: 8,
+              children: (cat == ComponentCategory.gpu ? _gpuManufacturers : _mainManufacturers)
+                  .map(_buildManufacturerChip).toList(),
+            ),
           const SizedBox(height: 20),
 
           // CPU / Mainboard → Socket
