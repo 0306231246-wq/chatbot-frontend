@@ -4,7 +4,7 @@ import '../models/pc_build.dart';
 
 class ApiService {
   // Thay thế bằng địa chỉ IP máy chủ FastAPI của bạn (Dùng 10.0.2.2 cho Android Emulator)
-  static const String baseUrl = 'http://192.168.1.45:8000';
+  static const String baseUrl = 'http://127.0.0.1:8000';
 
   /// Gửi câu hỏi của người dùng tới Backend FastAPI Chatbot và nhận phản hồi
   static Future<Map<String, dynamic>> sendMessageToChatbot(String message) async {
@@ -14,7 +14,10 @@ class ApiService {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'message': message}),
+        body: jsonEncode({
+          'user_message': message,
+          'session_id': 'default_new_session', // Bạn có thể thay đổi session_id nếu muốn quản lý nhiều phiên trò chuyện
+        }),
       );
 
       if (response.statusCode == 200) {
