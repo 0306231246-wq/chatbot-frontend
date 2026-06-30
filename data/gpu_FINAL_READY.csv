@@ -38,7 +38,7 @@ Colorful NB-V GeForce RTX 2060 6GB GDDR6 Red / Black,7680000,GeForce RTX 2060,6.
 MSI GeForce RTX 2060 GAMING Z 6G GDDR6,7680000,GeForce RTX 2060,6.0,1365.0,1830.0,RGB,247.0,190.0,PCIe 3.0 x16,assets/images/gpu/gpu_msi_geforce_rtx_2060_gaming_z_6g_gddr6.png
 Gigabyte GAMING OC PRO GeForce RTX 2060 6GB GDDR6 White / Black,7680000,GeForce RTX 2060,6.0,1680.0,1830.0,WHITE,280.0,160.0,PCIe x16,assets/images/gpu/gpu_gigabyte_gaming_oc_pro_geforce_rtx_2060_6gb_gddr6_white_black.png
 Zotac GAMING Twin Fan GeForce RTX 2060 12GB GDDR6 Gray,10079760,GeForce RTX 2060,12.0,1470.0,1650.0,GREY,210.0,184.0,PCIe x16,assets/images/gpu/gpu_zotac_gaming_twin_fan_geforce_rtx_2060_12gb_gddr6_gray.png
-MSI GeForce RTX™ 4070 SUPER 12G VENTUS 2X OC GDDR6X,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2505.0,GREY,242.0,220.0,PCIe 4.0 x16,
+MSI GeForce RTX™ 4070 SUPER 12G VENTUS 2X OC GDDR6X,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2505.0,GREY,242.0,220.0,PCIe 4.0 x16,assets/images/gpu/gpu_msi_rtx_tm_4070.png
 Inno3D Twin X2 OC GeForce RTX 4070 SUPER 12GB GDDR6X White / Silver,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2505.0,WHITE,250.0,220.0,PCIe x16,assets/images/gpu/gpu_inno3d_twin_x2_oc_geforce_rtx_4070_super_12gb_gddr6x_white_silver.png
 Inno3D GeForce RTX 4070 SUPER Twin X2 OC 12GB GDDR6X Black / Silver,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2505.0,BLACK,250.0,220.0,PCIe x16,assets/images/gpu/gpu_inno3d_geforce_rtx_4070_super_twin_x2_oc_12gb_gddr6x_black_silver.png
 Palit GeForce GTX 1080 GameRock 8GB GDDR5X Gray / Blue,11976000,GeForce GTX 1080,8.0,1645.0,1784.0,GREY,285.0,180.0,PCIe x16,assets/images/gpu/gpu_palit_geforce_gtx_1080_gamerock_8gb_gddr5x_gray_blue.png
@@ -194,7 +194,7 @@ MSI N760-2GD5/OC GeForce GTX 760 2GB GDDR5 Black,6456000,GeForce GTX 760,2.0,100
 PNY RTX A4000 RTX A-Series RTX A4000 Black / Gold 16GB GDDR6,22656000,RTX A4000,16.0,735.0,1560.0,BLACK,241.0,140.0,PCIe x16,assets/images/gpu/gpu_pny_rtx_a4000_rtx_a_series_rtx_a4000_black_gold_16gb_gddr6.png
 PNY RTX A-Series RTX A5000 24GB GDDR6 Black,180392160,RTX A5000,24.0,1170.0,1695.0,BLACK,267.0,230.0,PCIe x16,assets/images/gpu/gpu_pny_rtx_a_series_rtx_a5000_24gb_gddr6_black.png
 Sparkle ECO Arc A310 4GB GDDR6,3119760,Arc A310,4.0,2000.0,2000.0,BLUE,156.0,50.0,PCIe 4.0 x8,assets/images/gpu/gpu_sparkle_eco_arc_a310_4gb_gddr6.png
-AMD 100-300000075 Radeon PRO W7800 32GB GDDR6 Black,57171360,Radeon PRO W7800,32.0,1855.0,2499.0,BLACK,280.0,260.0,PCIe x16,
+AMD 100-300000075 Radeon PRO W7800 32GB GDDR6 Black,57171360,Radeon PRO W7800,32.0,1855.0,2499.0,BLACK,280.0,260.0,PCIe x16,assets/images/gpu/gpu_amd_100_300000075_radeon_pro_w7800_32gb_gddr6_black.png
 AMD Radeon PRO W6400 Blue 4GB GDDR6 Blue,5174160,Radeon PRO W6400,4.0,2331.0,2331.0,BLUE,168.0,50.0,PCIe x16,assets/images/gpu/gpu_amd_radeon_pro_w6400_blue_4gb_gddr6_blue.png
 AMD Radeon PRO W6600 8GB GDDR6 Blue,7463760,Radeon PRO W6600,8.0,2331.0,2580.0,BLUE,241.0,120.0,PCIe x16,assets/images/gpu/gpu_amd_radeon_pro_w6600_8gb_gddr6_blue.png
 AMD Radeon PRO W6800 32GB GDDR6 Blue / Gray,55199040,Radeon PRO W6800,32.0,2075.0,2320.0,BLUE,267.0,250.0,PCIe x16,assets/images/gpu/gpu_amd_radeon_pro_w6800_32gb_gddr6_blue_gray.png
@@ -417,7 +417,7 @@ Asus GeForce RTX 3060 Ti DUAL 8GB GDDR6 Black / Silver,11738160,GeForce RTX 3060
 Asus GeForce RTX 3060 Ti LHR KO GAMING OC V2 8GB GDDR6 Silver / Black,11738160,GeForce RTX 3060 Ti,8.0,1410.0,1785.0,GREY,275.0,200.0,PCIe x16,assets/images/gpu/gpu_asus_geforce_rtx_3060_ti_lhr_ko_gaming_oc_v2_8gb_gddr6_silver_black.png
 Asus GeForce RTX 4060 ProArt OC 8GB GDDR6 Black / Gold,10799760,GeForce RTX 4060,8.0,1830.0,2580.0,BLACK,300.0,115.0,PCIe x16,assets/images/gpu/gpu_asus_geforce_rtx_4060_proart_oc_8gb_gddr6_black_gold.png
 Asus GeForce RTX 4060 Ti ROG Strix GAMING OC 16GB GDDR6 Black / Red,18620880,GeForce RTX 4060 Ti,16.0,2310.0,2745.0,BLACK,311.0,165.0,PCIe x16,assets/images/gpu/gpu_asus_geforce_rtx_4060_ti_rog_strix_gaming_oc_16gb_gddr6_black_red.png
-Asus GeForce RTX 4070 SUPER DUAL OC 12GB GDDR6X White,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2550.0,WHITE,267.0,220.0,PCIe x16,
+Asus GeForce RTX 4070 SUPER DUAL OC 12GB GDDR6X White,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2550.0,WHITE,267.0,220.0,PCIe x16,assets/images/gpu/gpu_asus_geforce_rtc_4070_super_dual_oc_12GB_gddr6x_White.png
 Asus GeForce RTX 4070 SUPER PRIME 12GB GDDR6X Black,20302320,GeForce RTX 4070 SUPER,12.0,1980.0,2505.0,BLACK,269.0,220.0,PCIe 4.0 x16,assets/images/gpu/gpu_asus_geforce_rtx_4070_super_prime_12gb_gddr6x_black.png
 Asus KO Gaming OC GeForce RTX 3070 8GB GDDR6 Black / Silver,16752000,GeForce RTX 3070,8.0,1500.0,1845.0,BLACK,275.0,220.0,PCIe x16,assets/images/gpu/gpu_asus_ko_gaming_oc_geforce_rtx_3070_8gb_gddr6_black_silver.png
 Asus KO GeForce RTX 3060 Ti 8GB GDDR6 Black / Silver,11738160,GeForce RTX 3060 Ti,8.0,1410.0,1695.0,BLACK,275.0,200.0,PCIe x16,assets/images/gpu/gpu_asus_ko_geforce_rtx_3060_ti_8gb_gddr6_black_silver.png
