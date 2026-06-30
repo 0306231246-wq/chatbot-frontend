@@ -10,8 +10,9 @@ import 'component_catalog/catalog_data_generated.dart';
 class ComponentCatalogPage extends StatelessWidget {
   /// Truyền null → dùng sample data xem trước UI
   final List<PcComponent>? components;
+  final String? searchQuery;
 
-  const ComponentCatalogPage({super.key, this.components});
+  const ComponentCatalogPage({super.key, this.components, this.searchQuery});
 
   List<PcComponent> _forCategory(ComponentCategory cat) {
     final all = components ?? generatedCatalog;
@@ -25,6 +26,7 @@ class ComponentCatalogPage extends StatelessWidget {
         return CategoryPage(
           category: cat,
           components: _forCategory(cat),
+          searchQuery: searchQuery,
         );
       }).toList(),
     );
