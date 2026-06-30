@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../services/auth_service.dart';
 import 'main_store_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,101 +12,183 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  DateTime? _lastForgotPasswordTime;
   bool _obscurePassword = true;
   bool _isLoading = false;
-
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: kIsWeb ? dotenv.env['GOOGLE_WEB_CLIENT_ID'] : null,
-    scopes: ['email'],
-  );
+  bool _isLoginMode = true;
 
   void _handleGoogleLogin() async {
     setState(() => _isLoading = true);
-    try {
-      if (kIsWeb) {
-        // Trên Web: Sử dụng trực tiếp GoogleAuthProvider của Firebase
-        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        final UserCredential userCred =
-            await FirebaseAuth.instance.signInWithPopup(googleProvider);
-        final User? user = userCred.user;
+    final result = await _authService.signInWithGoogle();
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
 
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Đăng nhập thành công! Chào mừng ${user?.displayName ?? user?.email}.')),
-        );
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const MainStorePage()),
-          );
-        }
-      } else {
-        // Trên Android/iOS: Sử dụng GoogleSignIn native để hiển thị popup chọn tài khoản
-        final GoogleSignInAccount? account = await _googleSignIn.signIn();
-        if (account != null) {
-          final GoogleSignInAuthentication auth = await account.authentication;
-          final AuthCredential credential = GoogleAuthProvider.credential(
-            accessToken: auth.accessToken,
-            idToken: auth.idToken,
-          );
-
-          final UserCredential userCred =
-              await FirebaseAuth.instance.signInWithCredential(credential);
-          final User? user = userCred.user;
-
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Đăng nhập thành công! Chào mừng ${user?.displayName ?? user?.email}.')),
-          );
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const MainStorePage()),
-            );
-          }
-        }
-      }
-    } catch (error) {
-      if (!mounted) return;
+    if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối hoặc thông tin tài khoản của bạn.')),
+        SnackBar(content: Text('Đăng nhập thành công! Chào mừng ${result.user?.displayName ?? result.user?.email}.')),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainStorePage()),
+        );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Đăng nhập thất bại.'),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
     }
   }
 
-  void _handleLogin() async {
-    if (_emailController.text.trim().isEmpty ||
-        _passwordController.text.isEmpty) {
+  void _handleEmailAuth() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Vui lòng nhập đầy đủ thông tin đăng nhập!')),
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ Email và Mật khẩu!')),
       );
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(
-        const Duration(seconds: 1)); // Giả lập gọi API đăng nhập
+    
+    final result = _isLoginMode 
+        ? await _authService.signInWithEmail(email, password)
+        : await _authService.signUpWithEmail(email, password);
+
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Đăng nhập thành công! Chào mừng trở lại TECH-GEAR.')),
-    );
-    Navigator.pop(context);
+    if (result.success) {
+      final user = result.user;
+
+      // KIỂM TRA XÁC THỰC EMAIL (BẮT BUỘC)
+      if (user != null && !user.emailVerified) {
+        if (_isLoginMode) {
+          try {
+            await user.sendEmailVerification();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Tài khoản chưa xác thực! Đã gửi lại link xác thực mới vào Email của bạn.'),
+                backgroundColor: Colors.orange.shade800,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Vui lòng kiểm tra Hộp thư Email để xác thực tài khoản trước khi đăng nhập!'),
+                backgroundColor: Colors.orange.shade800,
+              ),
+            );
+          }
+        } else {
+          // Vừa mới đăng ký xong
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng ký thành công! Vui lòng kiểm tra hộp thư email để xác thực tài khoản.'),
+              backgroundColor: Color(0xFF1B9E5A),
+              duration: Duration(seconds: 4),
+            ),
+          );
+          setState(() {
+            _isLoginMode = true; // Đổi lại thành form Đăng nhập
+          });
+        }
+        
+        // Đăng xuất ra ngay lập tức và chặn không cho vào Main Page
+        await _authService.signOut();
+        return;
+      }
+
+      // NẾU ĐÃ XÁC THỰC (Hoặc đăng nhập bằng Google)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đăng nhập thành công! Chào mừng ${user?.email}.'),
+          backgroundColor: const Color(0xFF1B9E5A),
+        ),
+      );
+      
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainStorePage()),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Đã có lỗi xảy ra.'),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
+    }
+  }
+
+  void _handleForgotPassword() async {
+    if (_lastForgotPasswordTime != null) {
+      final difference = DateTime.now().difference(_lastForgotPasswordTime!);
+      if (difference.inSeconds < 60) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Vui lòng đợi ${60 - difference.inSeconds} giây trước khi gửi lại yêu cầu!'),
+            backgroundColor: Colors.orange.shade800,
+          ),
+        );
+        return;
+      }
+    }
+
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập Email để khôi phục mật khẩu!')),
+      );
+      return;
+    }
+
+    _lastForgotPasswordTime = DateTime.now();
+
+    setState(() => _isLoading = true);
+    final result = await _authService.resetPassword(email);
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã gửi link khôi phục! Vui lòng kiểm tra hộp thư của bạn.'),
+          backgroundColor: Color(0xFF1B9E5A),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Đã có lỗi xảy ra.'),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
+    }
   }
 
   @override
@@ -192,25 +271,22 @@ class _LoginPageState extends State<LoginPage> {
                     isPassword: true,
                   ),
                   const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Hệ thống khôi phục mật khẩu đang bảo trì!')),
-                        );
-                      },
-                      child: Text(
-                        'Quên mật khẩu?',
-                        style: TextStyle(
-                            color: primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
+                  if (_isLoginMode)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _isLoading ? null : _handleForgotPassword,
+                        child: Text(
+                          'Quên mật khẩu?',
+                          style: TextStyle(
+                              color: primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    ),
-                  ),
+                    )
+                  else
+                    const SizedBox(height: 48), // Padding bù lại khoảng trống của nút Quên mật khẩu
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -238,7 +314,7 @@ class _LoginPageState extends State<LoginPage> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                         ),
-                        onPressed: _isLoading ? null : _handleLogin,
+                        onPressed: _isLoading ? null : _handleEmailAuth,
                         child: _isLoading
                             ? const SizedBox(
                                 width: 24,
@@ -246,9 +322,9 @@ class _LoginPageState extends State<LoginPage> {
                                 child: CircularProgressIndicator(
                                     color: Colors.white, strokeWidth: 2.5),
                               )
-                            : const Text(
-                                'ĐĂNG NHẬP',
-                                style: TextStyle(
+                            : Text(
+                                _isLoginMode ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ',
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -346,20 +422,21 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Chưa có tài khoản?',
+                        _isLoginMode ? 'Chưa có tài khoản?' : 'Đã có tài khoản?',
                         style: TextStyle(
                             color: Colors.white.withOpacity(0.5), fontSize: 13),
                       ),
                       TextButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Tính năng đăng ký đang được mở khóa!')),
-                          );
+                          setState(() {
+                            _isLoginMode = !_isLoginMode;
+                            // Tùy chọn: Xóa trắng form khi đổi mode
+                            _emailController.clear();
+                            _passwordController.clear();
+                          });
                         },
                         child: Text(
-                          'Đăng ký ngay',
+                          _isLoginMode ? 'Đăng ký ngay' : 'Đăng nhập',
                           style: TextStyle(
                               color: secondary,
                               fontSize: 13,

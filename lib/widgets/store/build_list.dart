@@ -33,7 +33,8 @@ class BuildList extends StatelessWidget {
               children: [
                 Icon(Icons.search_off_rounded, color: Colors.white24, size: 48),
                 SizedBox(height: 12),
-                Text('Không tìm thấy cấu hình nào phù hợp.', style: TextStyle(color: Colors.white38, fontSize: 14)),
+                Text('Không tìm thấy cấu hình nào phù hợp.',
+                    style: TextStyle(color: Colors.white38, fontSize: 14)),
               ],
             ),
           ),
@@ -52,7 +53,12 @@ class BuildList extends StatelessWidget {
             decoration: BoxDecoration(
               color: surface,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.18),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,35 +69,71 @@ class BuildList extends StatelessWidget {
                     children: [
                       Icon(Icons.bolt, color: primary, size: 18),
                       const SizedBox(width: 8),
-                      Text(build.buildId, style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold)),
+                      Text(build.buildId,
+                          style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: primary.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-                        child: Text('CẤU HÌNH SẴN', style: TextStyle(color: primary, fontSize: 9, fontWeight: FontWeight.bold)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                            color: primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: Text('CẤU HÌNH SẴN',
+                            style: TextStyle(
+                                color: primary,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
                 ),
                 Divider(color: Colors.grey.shade200, height: 1),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: Column(
                     children: [
-                      _ComponentRow(icon: Icons.memory, label: 'CPU', model: build.cpuModel, price: _formatVnd(build.cpuPrice), accent: primary),
+                      _ComponentRow(
+                          icon: Icons.memory,
+                          label: 'CPU',
+                          model: build.cpuModel,
+                          price: _formatVnd(build.cpuPrice),
+                          accent: primary),
                       const SizedBox(height: 10),
-                      _ComponentRow(icon: Icons.developer_board, label: 'Mainboard', model: build.motherboardModel, price: _formatVnd(build.motherboardPrice), accent: primary),
+                      _ComponentRow(
+                          icon: Icons.developer_board,
+                          label: 'Mainboard',
+                          model: build.motherboardModel,
+                          price: _formatVnd(build.motherboardPrice),
+                          accent: primary),
                       const SizedBox(height: 10),
-                      _ComponentRow(icon: Icons.videogame_asset, label: 'VGA', model: build.gpuModel, price: _formatVnd(build.gpuPrice), accent: primary),
+                      _ComponentRow(
+                          icon: Icons.videogame_asset,
+                          label: 'VGA',
+                          model: build.gpuModel,
+                          price: _formatVnd(build.gpuPrice),
+                          accent: primary),
                       const SizedBox(height: 10),
-                      _ComponentRow(icon: Icons.build_outlined, label: 'Lắp ráp', model: 'Phí lắp ráp & test', price: _formatVnd(build.assemblyFee), accent: primary),
+                      _ComponentRow(
+                          icon: Icons.build_outlined,
+                          label: 'Lắp ráp',
+                          model: 'Phí lắp ráp & test',
+                          price: _formatVnd(build.assemblyFee),
+                          accent: primary),
                     ],
                   ),
                 ),
                 if (build.buildNotes.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                    child: Text(build.buildNotes, style: TextStyle(color: Colors.black.withOpacity(0.55), fontSize: 12, fontStyle: FontStyle.italic)),
+                    child: Text(build.buildNotes,
+                        style: TextStyle(
+                            color: Colors.black.withOpacity(0.55),
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic)),
                   ),
                 Divider(color: Colors.grey.shade200, height: 1),
                 Padding(
@@ -102,8 +144,14 @@ class BuildList extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Tổng giá', style: TextStyle(color: Colors.black54, fontSize: 11)),
-                          Text(_formatVnd(build.totalPrice), style: const TextStyle(color: Color(0xFF1B9E5A), fontSize: 17, fontWeight: FontWeight.bold)),
+                          const Text('Tổng giá',
+                              style: TextStyle(
+                                  color: Colors.black54, fontSize: 11)),
+                          Text(_formatVnd(build.totalPrice),
+                              style: const TextStyle(
+                                  color: Color(0xFF1B9E5A),
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold)),
                         ],
                       ),
                       ElevatedButton.icon(
@@ -111,9 +159,11 @@ class BuildList extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2B2B33),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                        icon:
+                            const Icon(Icons.shopping_cart_outlined, size: 18),
                         label: const Text('Chọn cấu hình'),
                       ),
                     ],
@@ -135,7 +185,12 @@ class _ComponentRow extends StatelessWidget {
   final String price;
   final Color accent;
 
-  const _ComponentRow({required this.icon, required this.label, required this.model, required this.price, required this.accent});
+  const _ComponentRow(
+      {required this.icon,
+      required this.label,
+      required this.model,
+      required this.price,
+      required this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -147,12 +202,20 @@ class _ComponentRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: accent, fontSize: 10, fontWeight: FontWeight.bold)),
-              Text(model, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.black87, fontSize: 12)),
+              Text(label,
+                  style: TextStyle(
+                      color: accent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
+              Text(model,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.black87, fontSize: 12)),
             ],
           ),
         ),
-        Text(price, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+        Text(price,
+            style: const TextStyle(color: Colors.black54, fontSize: 12)),
       ],
     );
   }

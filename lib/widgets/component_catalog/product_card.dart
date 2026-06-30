@@ -20,24 +20,31 @@ class ProductCard extends StatelessWidget {
 
   Color get _accentColor {
     switch (component.manufacturer.toUpperCase()) {
-      case 'AMD':    return Colors.deepOrange;
-      case 'NVIDIA': return Colors.green;
-      case 'INTEL':  return Colors.blueAccent;
-      default:       return Colors.grey;
+      case 'AMD':
+        return Colors.deepOrange;
+      case 'NVIDIA':
+        return Colors.green;
+      case 'INTEL':
+        return Colors.blueAccent;
+      default:
+        return Colors.grey;
     }
   }
 
   IconData get _categoryIcon {
     switch (category) {
-      case ComponentCategory.cpu:       return Icons.memory;
-      case ComponentCategory.gpu:       return Icons.videogame_asset;
-      case ComponentCategory.mainboard: return Icons.developer_board;
+      case ComponentCategory.cpu:
+        return Icons.memory;
+      case ComponentCategory.gpu:
+        return Icons.videogame_asset;
+      case ComponentCategory.mainboard:
+        return Icons.developer_board;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final c       = component;
+    final c = component;
     final primary = Theme.of(context).colorScheme.primary;
 
     return Container(
@@ -45,7 +52,12 @@ class ProductCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: primary.withOpacity(0.08), width: 1),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4))
+        ],
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -59,10 +71,12 @@ class ProductCard extends StatelessWidget {
                 context: context,
                 builder: (ctx) {
                   final size = MediaQuery.of(ctx).size;
-                  final popupSize = (size.width < 600 ? size.width * 0.85 : 480.0);
+                  final popupSize =
+                      (size.width < 600 ? size.width * 0.85 : 480.0);
                   return Dialog(
                     backgroundColor: Colors.transparent,
-                    insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    insetPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 24),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -80,7 +94,8 @@ class ProductCard extends StatelessWidget {
                               padding: const EdgeInsets.all(24),
                               child: c.imageUrl.startsWith('assets/')
                                   ? Image.asset(c.imageUrl, fit: BoxFit.contain)
-                                  : Image.network(c.imageUrl, fit: BoxFit.contain),
+                                  : Image.network(c.imageUrl,
+                                      fit: BoxFit.contain),
                             ),
                           ),
                         ),
@@ -89,14 +104,17 @@ class ProductCard extends StatelessWidget {
                           right: 8,
                           child: Material(
                             color: const Color(0xFF2B2B33),
-                            shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 2)),
+                            shape: const CircleBorder(
+                                side:
+                                    BorderSide(color: Colors.white, width: 2)),
                             elevation: 8,
                             child: InkWell(
                               customBorder: const CircleBorder(),
                               onTap: () => Navigator.pop(ctx),
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
-                                child: Icon(Icons.close_rounded, color: Colors.white, size: 24),
+                                child: Icon(Icons.close_rounded,
+                                    color: Colors.white, size: 24),
                               ),
                             ),
                           ),
@@ -112,19 +130,28 @@ class ProductCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF2F2F5), borderRadius: BorderRadius.circular(8)),
+                    color: const Color(0xFFF2F2F5),
+                    borderRadius: BorderRadius.circular(8)),
                 child: c.imageUrl.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(6),
                         child: c.imageUrl.startsWith('assets/')
-                            ? Image.asset(c.imageUrl, fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                    Icon(_categoryIcon, size: 40, color: _accentColor))
-                            : Image.network(c.imageUrl, fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                    Icon(_categoryIcon, size: 40, color: _accentColor)),
+                            ? Image.asset(c.imageUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => Icon(
+                                    _categoryIcon,
+                                    size: 40,
+                                    color: _accentColor))
+                            : Image.network(c.imageUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => Icon(
+                                    _categoryIcon,
+                                    size: 40,
+                                    color: _accentColor)),
                       )
-                    : Center(child: Icon(_categoryIcon, size: 40, color: _accentColor)),
+                    : Center(
+                        child:
+                            Icon(_categoryIcon, size: 40, color: _accentColor)),
               ),
             ),
           ),
@@ -166,7 +193,10 @@ class ProductCard extends StatelessWidget {
                         c.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12),
                       ),
                     ),
                   ),
@@ -174,7 +204,10 @@ class ProductCard extends StatelessWidget {
 
                   // Giá
                   Text(formatVnd(c.price),
-                      style: const TextStyle(color: Color(0xFF1B9E5A), fontWeight: FontWeight.bold, fontSize: 13)),
+                      style: const TextStyle(
+                          color: Color(0xFF1B9E5A),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13)),
                   const SizedBox(height: 6),
 
                   // Spec lines theo category
@@ -195,9 +228,11 @@ class ProductCard extends StatelessWidget {
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: Colors.grey.shade300,
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
-              icon: Icon(c.inStock ? Icons.add : Icons.remove_shopping_cart, size: 14),
+              icon: Icon(c.inStock ? Icons.add : Icons.remove_shopping_cart,
+                  size: 14),
               label: Text(c.inStock ? 'Add to build' : 'Hết hàng',
                   style: const TextStyle(fontSize: 11)),
             ),
@@ -212,27 +247,29 @@ class ProductCard extends StatelessWidget {
 
     switch (category) {
       case ComponentCategory.cpu:
-        if (c.socket        != null) specs.add(MapEntry('Socket',      c.socket!));
-        if (c.totalCores    != null) specs.add(MapEntry('Cores',       '${c.totalCores}'));
-        if (c.boostClockGhz != null) specs.add(MapEntry('Boost',       '${c.boostClockGhz} GHz'));
+        if (c.socket != null) specs.add(MapEntry('Socket', c.socket!));
+        if (c.totalCores != null)
+          specs.add(MapEntry('Cores', '${c.totalCores}'));
+        if (c.boostClockGhz != null)
+          specs.add(MapEntry('Boost', '${c.boostClockGhz} GHz'));
         break;
 
       case ComponentCategory.gpu:
-        if (c.vramLabel     != null) specs.add(MapEntry('VRAM',        c.vramLabel!));
-        if (c.boostClockGhz != null) specs.add(MapEntry('Boost',       '${c.boostClockGhz} GHz'));
-        if (c.tdpWatt       != null) specs.add(MapEntry('TDP',         '${c.tdpWatt} W'));
+        if (c.vramLabel != null) specs.add(MapEntry('VRAM', c.vramLabel!));
+        if (c.boostClockGhz != null)
+          specs.add(MapEntry('Boost', '${c.boostClockGhz} GHz'));
+        if (c.tdpWatt != null) specs.add(MapEntry('TDP', '${c.tdpWatt} W'));
         break;
 
       case ComponentCategory.mainboard:
-        if (c.socket        != null) specs.add(MapEntry('Socket',      c.socket!));
-        if (c.chipset       != null) specs.add(MapEntry('Chipset',     c.chipset!));
-        if (c.formFactor    != null) specs.add(MapEntry('Form factor', c.formFactor!));
+        if (c.socket != null) specs.add(MapEntry('Socket', c.socket!));
+        if (c.chipset != null) specs.add(MapEntry('Chipset', c.chipset!));
+        if (c.formFactor != null)
+          specs.add(MapEntry('Form factor', c.formFactor!));
         break;
     }
 
-    return specs
-        .map((e) => SpecLine(label: e.key, value: e.value))
-        .toList();
+    return specs.map((e) => SpecLine(label: e.key, value: e.value)).toList();
   }
 }
 
@@ -248,8 +285,13 @@ class SpecLine extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.black54, fontSize: 10)),
-          Text(value, style: const TextStyle(color: Colors.black87, fontSize: 10, fontWeight: FontWeight.w600)),
+          Text(label,
+              style: const TextStyle(color: Colors.black54, fontSize: 10)),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );
