@@ -41,10 +41,18 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
     });
     _scrollToBottom();
     final response = await ApiService.sendMessageToChatbot(text);
+    
+    String responseText = response['text'] ?? response['response'] ?? response['message'] ?? response.toString();
+    final RegExp replyRegex = RegExp(r'^\{chatbot_reply:\s*(.*)\}$', dotAll: true);
+    final match = replyRegex.firstMatch(responseText);
+    if (match != null) {
+      responseText = match.group(1) ?? responseText;
+    }
+
     _updateState(() {
       _isLoading = false;
       _messages.add({
-        'text': response['text'],
+        'text': responseText,
         'isUser': false,
         'hasCard': response['has_card'] ?? false,
         'buildData': response['build_data'] != null ? PcBuild.fromJson(response['build_data']) : null,
