@@ -1,44 +1,135 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/pc_build.dart';
 
 class ApiService {
-  // Thay thế bằng địa chỉ IP máy chủ FastAPI của bạn (Dùng 10.0.2.2 cho Android Emulator)
-  static const String baseUrl = 'http://192.168.1.45:8000';
+  // Danh sách 3 Base URL hỗ trợ chuyển đổi nhanh:
+  // 1. Local IP mạng LAN (dành cho điện thoại thật hoặc máy ảo tuỳ ý)
+  static const String localIpUrl = 'http://127.0.0.1:8000';
+  // 2. Android Emulator mặc định
+  static const String emulatorUrl = 'http://10.0.2.2:8000';
+  // 3. Ngrok Public URL (Dành cho truy cập qua Internet)
+  static const String ngrokUrl =
+      'https://customer-outskirts-blubber.ngrok-free.dev';
+
+  // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
+  static String baseUrl = localIpUrl;
+
+  // Session ID mặc định cho phiên tư vấn
+  static String currentSessionId = 'session_gaming_pc';
 
   /// Gửi câu hỏi của người dùng tới Backend FastAPI Chatbot và nhận phản hồi
-  static Future<Map<String, dynamic>> sendMessageToChatbot(String message) async {
+  static Future<Map<String, dynamic>> sendMessageToChatbot(
+      String message) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final sessionId = user != null ? 'session_${user.uid}' : currentSessionId;
     final url = Uri.parse('$baseUrl/chat');
-    
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'message': message}),
-      );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.bodyBytes));
-        return responseData;
+    try {
+      final idToken = await user?.getIdToken();
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              if (idToken != null) 'Authorization': 'Bearer $idToken',
+            },
+            body: jsonEncode({
+              'user_message': message,
+              'session_id': sessionId,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+
+      // 201 Created: Thành công theo đúng đặc tả API mới
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final Map<String, dynamic> responseData =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        final String replyText = responseData['chatbot_reply'] ??
+            responseData['text'] ??
+            'Đã nhận yêu cầu tư vấn.';
+
+        return {
+          'text': replyText,
+          'has_card': responseData['has_card'] ?? false,
+          'build_data': responseData['build_data'],
+          'success': true,
+        };
+      } else if (response.statusCode == 400) {
+        return {
+          'text':
+              'Lỗi xác thực dữ liệu (400). Vui lòng kiểm tra lại nội dung câu hỏi!',
+          'has_card': false,
+          'success': false,
+        };
+      } else if (response.statusCode == 500) {
+        return {
+          'text':
+              'Lỗi hệ thống máy chủ (500). Backend FastAPI đang gặp sự cố, vui lòng thử lại sau!',
+          'has_card': false,
+          'success': false,
+        };
+      } else if (response.statusCode == 504) {
+        return {
+          'text':
+              'Máy chủ phản hồi quá hạn (504 Timeout). AI Ollama đang bị quá tải, vui lòng thử lại!',
+          'has_card': false,
+          'success': false,
+        };
       } else {
         return {
-          'text': 'Hệ thống đang bận phản hồi. Vui lòng thử lại sau giây lát!',
-          'success': false
+          'text':
+              'Hệ thống đang bận phản hồi (Mã lỗi: ${response.statusCode}). Vui lòng thử lại sau giây lát!',
+          'has_card': false,
+          'success': false,
         };
       }
+    } on TimeoutException catch (_) {
+      return {
+        'text':
+            'Kết nối vượt quá 60 giây (Timeout). Mô hình Ollama đang xử lý RAG mất nhiều thời gian, vui lòng thử lại!',
+        'has_card': false,
+        'success': false,
+      };
     } catch (e) {
       // Giả lập phản hồi thông minh trong trường hợp chưa bật Backend FastAPI
       return _generateMockResponse(message);
     }
   }
 
+  /// Xóa sạch bộ nhớ đệm và lịch sử phiên hội thoại trên cả UI và Server
+  static Future<bool> deleteSession() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final sessionId = user != null ? 'session_${user.uid}' : currentSessionId;
+    final url = Uri.parse('$baseUrl/sessions/$sessionId');
+    try {
+      final idToken = await user?.getIdToken();
+      final response = await http.delete(
+        url,
+        headers: {
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
+        },
+      ).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      return false; // Trả về false nếu backend chưa bật hoặc lỗi kết nối
+    }
+  }
+
   /// Hàm giả lập phản hồi để bạn kiểm tra giao diện mượt mà ngay cả khi chưa kết nối Backend
-  static Future<Map<String, dynamic>> _generateMockResponse(String userMessage) async {
-    await Future.delayed(const Duration(milliseconds: 1200)); // Tạo độ trễ tự nhiên
-    
+  static Future<Map<String, dynamic>> _generateMockResponse(
+      String userMessage) async {
+    await Future.delayed(
+        const Duration(milliseconds: 1200)); // Tạo độ trễ tự nhiên
+
     final lowerMsg = userMessage.toLowerCase();
-    
-    if (lowerMsg.contains('tư vấn') || lowerMsg.contains('build pc') || lowerMsg.contains('cấu hình')) {
+
+    if (lowerMsg.contains('tư vấn') ||
+        lowerMsg.contains('build pc') ||
+        lowerMsg.contains('cấu hình')) {
       final mockBuild = PcBuild(
         buildId: 'BUILD-03909',
         cpuModel: 'AMD Ryzen 7 9800X3D',
@@ -48,19 +139,22 @@ class ApiService {
         gpuModel: 'MSI GAMING TRIO RTX 4080 16GB',
         gpuPrice: 44399760,
         assemblyFee: 300000,
-        buildNotes: 'Cấu hình tối ưu cao cấp cho Render 3D và Gaming siêu nặng!',
+        buildNotes:
+            'Cấu hình tối ưu cao cấp cho Render 3D và Gaming siêu nặng!',
         totalPrice: 60527874,
       );
 
       return {
-        'text': 'Tôi đã tìm thấy cấu hình tối ưu nhất cho bạn dựa trên kho dữ liệu sản phẩm!',
+        'text':
+            'Tôi đã tìm thấy cấu hình tối ưu nhất cho bạn dựa trên kho dữ liệu sản phẩm!',
         'has_card': true,
         'build_data': mockBuild.toJson()
       };
     }
 
     return {
-      'text': 'Chào bạn! Tôi là trợ lý tư vấn cấu hình PC tự động. Bạn cần tôi build cấu hình trong tầm giá bao nhiêu hoặc có yêu cầu linh kiện gì đặc biệt không?',
+      'text':
+          'Chào bạn! Tôi là trợ lý tư vấn cấu hình PC tự động. Bạn cần tôi build cấu hình trong tầm giá bao nhiêu hoặc có yêu cầu linh kiện gì đặc biệt không?',
       'has_card': false
     };
   }

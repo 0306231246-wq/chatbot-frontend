@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '/models/component.dart';
 import 'component_category.dart';
 
@@ -51,41 +52,138 @@ class ProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Ảnh / placeholder
-          AspectRatio(
-            aspectRatio: 1.3,
-            child: Container(
-              decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F5), borderRadius: BorderRadius.circular(8)),
-              child: c.imageUrl.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: c.imageUrl.startsWith('assets/')
-                          ? Image.asset(c.imageUrl, fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) =>
-                                  Icon(_categoryIcon, size: 40, color: _accentColor))
-                          : Image.network(c.imageUrl, fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) =>
-                                  Icon(_categoryIcon, size: 40, color: _accentColor)),
-                    )
-                  : Center(child: Icon(_categoryIcon, size: 40, color: _accentColor)),
+          GestureDetector(
+            onTap: () {
+              if (c.imageUrl.isEmpty) return;
+              showDialog(
+                context: context,
+                builder: (ctx) {
+                  final size = MediaQuery.of(ctx).size;
+                  final popupSize = (size.width < 600 ? size.width * 0.85 : 480.0);
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        InteractiveViewer(
+                          panEnabled: true,
+                          boundaryMargin: const EdgeInsets.all(20),
+                          minScale: 0.5,
+                          maxScale: 4.0,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: popupSize,
+                              height: popupSize,
+                              color: Colors.white,
+                              padding: const EdgeInsets.all(24),
+                              child: c.imageUrl.startsWith('assets/')
+                                  ? Image.asset(c.imageUrl, fit: BoxFit.contain)
+                                  : Image.network(c.imageUrl, fit: BoxFit.contain),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Material(
+                            color: const Color(0xFF2B2B33),
+                            shape: const CircleBorder(side: BorderSide(color: Colors.white, width: 2)),
+                            elevation: 8,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => Navigator.pop(ctx),
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(Icons.close_rounded, color: Colors.white, size: 24),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+            child: AspectRatio(
+              aspectRatio: 1.25,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFF2F2F5), borderRadius: BorderRadius.circular(8)),
+                child: c.imageUrl.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: c.imageUrl.startsWith('assets/')
+                            ? Image.asset(c.imageUrl, fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    Icon(_categoryIcon, size: 40, color: _accentColor))
+                            : Image.network(c.imageUrl, fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    Icon(_categoryIcon, size: 40, color: _accentColor)),
+                      )
+                    : Center(child: Icon(_categoryIcon, size: 40, color: _accentColor)),
+              ),
             ),
           ),
           const SizedBox(height: 8),
 
-          // Tên
-          Text(c.name, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
-          const SizedBox(height: 4),
+          // Phần thông tin (Tên, Giá, Specs) được bọc trong Expanded + SingleChildScrollView để tuyệt đối không bao giờ bị tràn (Overflow)
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Tên (Bấm giữ hoặc nhấp đúp để copy mượt mà không bị lỗi giao diện Web)
+                  Tooltip(
+                    message: 'Nhấn giữ hoặc nhấp đúp để Copy tên',
+                    child: GestureDetector(
+                      onLongPress: () {
+                        Clipboard.setData(ClipboardData(text: c.name));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Đã copy: ${c.name}'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFF1B9E5A),
+                          ),
+                        );
+                      },
+                      onDoubleTap: () {
+                        Clipboard.setData(ClipboardData(text: c.name));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Đã copy: ${c.name}'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFF1B9E5A),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        c.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
 
-          // Giá
-          Text(formatVnd(c.price),
-              style: const TextStyle(color: Color(0xFF1B9E5A), fontWeight: FontWeight.bold, fontSize: 13)),
-          const SizedBox(height: 6),
+                  // Giá
+                  Text(formatVnd(c.price),
+                      style: const TextStyle(color: Color(0xFF1B9E5A), fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 6),
 
-          // Spec lines theo category
-          ..._buildSpecs(c),
-
-          const Spacer(),
+                  // Spec lines theo category
+                  ..._buildSpecs(c),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
 
           // Button
           SizedBox(

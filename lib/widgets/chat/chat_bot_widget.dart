@@ -31,6 +31,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
   }
 
   void _sendMessage() async {
+    if (_isLoading) return; // Chặn tuyệt đối không cho gửi yêu cầu mới khi hệ thống đang xử lý
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
@@ -50,6 +51,18 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
       });
     });
     _scrollToBottom();
+  }
+
+  void _resetChat() async {
+    _updateState(() {
+      _isLoading = true;
+    });
+    await ApiService.deleteSession();
+    _updateState(() {
+      _isLoading = false;
+      _messages.clear();
+      _messages.add({'text': 'Đã làm mới phiên tư vấn! Xin chào, tôi có thể giúp gì cho bạn hôm nay?', 'isUser': false});
+    });
   }
 
   void _scrollToBottom() {
@@ -87,6 +100,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                             isDesktop: false,
                             isModal: true,
                             onClose: () => Navigator.pop(context),
+                            onReset: _resetChat,
                           ),
                           Expanded(
                             child: ChatMessageList(
@@ -144,6 +158,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                     ChatHeader(
                       primary: primary,
                       isDesktop: true,
+                      onReset: _resetChat,
                     ),
                     Expanded(
                       child: ChatMessageList(
@@ -217,11 +232,14 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
               ),
-              onSubmitted: (_) => _sendMessage(),
+              onSubmitted: _isLoading ? null : (_) => _sendMessage(),
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(onPressed: _sendMessage, icon: Icon(Icons.send_rounded, color: primary)),
+          IconButton(
+            onPressed: _isLoading ? null : _sendMessage,
+            icon: Icon(Icons.send_rounded, color: _isLoading ? Colors.grey.shade400 : primary),
+          ),
         ],
       ),
     );

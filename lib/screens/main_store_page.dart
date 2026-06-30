@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/pc_build.dart';
 import '../widgets/chat/chat_bot_widget.dart';
 import '../widgets/component_catalog.dart';
 import '../widgets/store/build_list.dart';
 import '../widgets/store/build_filters.dart';
 import '../data/mock_data.dart';
+import 'login_page.dart';
 
 enum StoreTab { builds, components }
 
@@ -106,10 +108,75 @@ class _MainStorePageState extends State<MainStorePage> {
                   ),
                   actions: [
                     Container(
-                      margin: const EdgeInsets.only(right: 16),
+                      margin: const EdgeInsets.only(right: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(color: secondary, borderRadius: BorderRadius.circular(6)),
                       child: const Text('PCSTORE PRO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: FirebaseAuth.instance.currentUser != null
+                          ? PopupMenuButton<String>(
+                              offset: const Offset(0, 48),
+                              color: const Color(0xFF1A1A22),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              onSelected: (val) async {
+                                if (val == 'signout') {
+                                  await FirebaseAuth.instance.signOut();
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Đã đăng xuất thành công')),
+                                  );
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                                    (route) => false,
+                                  );
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: 'signout',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.logout_rounded, color: Colors.redAccent.shade400, size: 18),
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        'Đăng xuất',
+                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: FirebaseAuth.instance.currentUser?.photoURL != null
+                                    ? Image.network(
+                                        FirebaseAuth.instance.currentUser!.photoURL!,
+                                        width: 36,
+                                        height: 36,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            Icon(Icons.account_circle, size: 36, color: primary),
+                                      )
+                                    : Icon(Icons.account_circle, size: 36, color: primary),
+                              ),
+                            )
+                          : TextButton.icon(
+                              style: TextButton.styleFrom(
+                                backgroundColor: primary.withOpacity(0.15),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              icon: Icon(Icons.person_outline_rounded, size: 16, color: primary),
+                              label: Text('Đăng nhập', style: TextStyle(color: primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                              onPressed: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+                                if (!context.mounted) return;
+                                setState(() {}); // Tải lại UI khi quay về từ trang đăng nhập
+                              },
+                            ),
                     ),
                   ],
                     bottom: PreferredSize(
@@ -272,6 +339,7 @@ class _MainStorePageState extends State<MainStorePage> {
     final builds = _filteredBuilds;
     final primary = Theme.of(context).colorScheme.primary;
     return CustomScrollView(
+      controller: ScrollController(),
       slivers: [
         SliverToBoxAdapter(
           child: Padding(

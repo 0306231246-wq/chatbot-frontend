@@ -5,6 +5,7 @@ class ChatHeader extends StatelessWidget {
   final bool isDesktop;
   final bool isModal;
   final VoidCallback? onClose;
+  final VoidCallback? onReset;
 
   const ChatHeader({
     super.key,
@@ -12,6 +13,7 @@ class ChatHeader extends StatelessWidget {
     required this.isDesktop,
     this.isModal = false,
     this.onClose,
+    this.onReset,
   });
 
   @override
@@ -47,12 +49,23 @@ class ChatHeader extends StatelessWidget {
               ),
             ],
           ),
-          if (!isDesktop && onClose != null)
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.redAccent, size: 30),
-              onPressed: onClose,
-              tooltip: 'Đóng',
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onReset != null)
+                IconButton(
+                  icon: const Icon(Icons.cleaning_services_rounded, color: Colors.black54, size: 22),
+                  onPressed: onReset,
+                  tooltip: 'Làm mới phiên chat',
+                ),
+              if (!isDesktop && onClose != null)
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.redAccent, size: 26),
+                  onPressed: onClose,
+                  tooltip: 'Đóng',
+                ),
+            ],
+          ),
         ],
       ),
     );
