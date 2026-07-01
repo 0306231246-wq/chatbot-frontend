@@ -73,23 +73,23 @@ class StoreHeader extends StatelessWidget {
                   labelColor: Theme.of(context).colorScheme.primary,
                   unselectedLabelColor: Colors.white38,
                   labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  tabs: [
+                  tabs: const [
                     Tab(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [Icon(Icons.memory, size: 16), SizedBox(width: 8), Text('CPU')],
+                        children: [Icon(Icons.memory, size: 16), SizedBox(width: 8), Text('CPU')],
                       ),
                     ),
                     Tab(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [Icon(Icons.videogame_asset, size: 16), SizedBox(width: 8), Text('GPU')],
+                        children: [Icon(Icons.videogame_asset, size: 16), SizedBox(width: 8), Text('GPU')],
                       ),
                     ),
                     Tab(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [Icon(Icons.developer_board, size: 16), SizedBox(width: 8), Text('Mainboard')],
+                        children: [Icon(Icons.developer_board, size: 16), SizedBox(width: 8), Text('Mainboard')],
                       ),
                     ),
                   ],

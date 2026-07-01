@@ -60,11 +60,14 @@ class _MainStorePageState extends State<MainStorePage> {
                                   isDesktop: isDesktop,
                                   selectedBrand: _controller.selectedBrand,
                                   maxBuildPrice: _controller.maxBuildPrice,
+                                  sortOption: _controller.buildSortOption,
                                   onBrandChanged: (val) => _controller.setSelectedBrand(val),
                                   onPriceChanged: (val) => _controller.setMaxBuildPrice(val),
+                                  onSortChanged: (val) => _controller.setBuildSortOption(val),
                                   onClear: () {
                                     _controller.setSelectedBrand('All');
                                     _controller.setMaxBuildPrice(100000000.0);
+                                    _controller.setBuildSortOption('Mặc định');
                                   },
                                 ),
                               Expanded(child: _buildBuildContentArea(isDesktop)),
@@ -146,11 +149,14 @@ class _MainStorePageState extends State<MainStorePage> {
                       isDesktop: false,
                       selectedBrand: _controller.selectedBrand,
                       maxBuildPrice: _controller.maxBuildPrice,
+                      sortOption: _controller.buildSortOption,
                       onBrandChanged: (val) => _controller.setSelectedBrand(val),
                       onPriceChanged: (val) => _controller.setMaxBuildPrice(val),
+                      onSortChanged: (val) => _controller.setBuildSortOption(val),
                       onClear: () {
                         _controller.setSelectedBrand('All');
                         _controller.setMaxBuildPrice(100000000.0);
+                        _controller.setBuildSortOption('Mặc định');
                       },
                     ),
                   ],

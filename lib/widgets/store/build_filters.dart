@@ -4,8 +4,10 @@ class BuildFilters extends StatelessWidget {
   final bool isDesktop;
   final String selectedBrand;
   final double maxBuildPrice;
+  final String sortOption;
   final ValueChanged<String> onBrandChanged;
   final ValueChanged<double> onPriceChanged;
+  final ValueChanged<String> onSortChanged;
   final VoidCallback onClear;
 
   const BuildFilters({
@@ -13,8 +15,10 @@ class BuildFilters extends StatelessWidget {
     required this.isDesktop,
     required this.selectedBrand,
     required this.maxBuildPrice,
+    required this.sortOption,
     required this.onBrandChanged,
     required this.onPriceChanged,
+    required this.onSortChanged,
     required this.onClear,
   });
 
@@ -66,6 +70,29 @@ class BuildFilters extends StatelessWidget {
               activeColor: primary,
               inactiveColor: Colors.white12,
               onChanged: onPriceChanged,
+            ),
+            const SizedBox(height: 24),
+            const Text('Sắp xếp', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
+            const SizedBox(height: 10),
+            Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(color: const Color(0xFF1A1A22), borderRadius: BorderRadius.circular(10)),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: sortOption,
+                  isExpanded: true,
+                  dropdownColor: const Color(0xFF1A1A22),
+                  icon: const Icon(Icons.swap_vert, color: Colors.white54, size: 18),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  items: ['Mặc định', 'Giá tăng dần', 'Giá giảm dần']
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) onSortChanged(v);
+                  },
+                ),
+              ),
             ),
           ],
         ),

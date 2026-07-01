@@ -96,7 +96,12 @@ class ApiService {
       };
     } catch (e) {
       // Giả lập phản hồi thông minh trong trường hợp chưa bật Backend FastAPI
-      return _generateMockResponse(message);
+      return {
+        'text':
+            'Backend FastAPI chưa bật hoặc không thể kết nối. Vui lòng kiểm tra lại cấu hình baseUrl!',
+        'has_card': false,
+        'success': false,
+      };
     }
   }
 
@@ -117,45 +122,5 @@ class ApiService {
     } catch (e) {
       return false; // Trả về false nếu backend chưa bật hoặc lỗi kết nối
     }
-  }
-
-  /// Hàm giả lập phản hồi để bạn kiểm tra giao diện mượt mà ngay cả khi chưa kết nối Backend
-  static Future<Map<String, dynamic>> _generateMockResponse(
-      String userMessage) async {
-    await Future.delayed(
-        const Duration(milliseconds: 1200)); // Tạo độ trễ tự nhiên
-
-    final lowerMsg = userMessage.toLowerCase();
-
-    if (lowerMsg.contains('tư vấn') ||
-        lowerMsg.contains('build pc') ||
-        lowerMsg.contains('cấu hình')) {
-      final mockBuild = PcBuild(
-        buildId: 'BUILD-03909',
-        cpuModel: 'AMD Ryzen 7 9800X3D',
-        cpuPrice: 10836000,
-        motherboardModel: 'MSI B850 PRO B850M-VC WIFI6E',
-        motherboardPrice: 4992114,
-        gpuModel: 'MSI GAMING TRIO RTX 4080 16GB',
-        gpuPrice: 44399760,
-        assemblyFee: 300000,
-        buildNotes:
-            'Cấu hình tối ưu cao cấp cho Render 3D và Gaming siêu nặng!',
-        totalPrice: 60527874,
-      );
-
-      return {
-        'text':
-            'Tôi đã tìm thấy cấu hình tối ưu nhất cho bạn dựa trên kho dữ liệu sản phẩm!',
-        'has_card': true,
-        'build_data': mockBuild.toJson()
-      };
-    }
-
-    return {
-      'text':
-          'Chào bạn! Tôi là trợ lý tư vấn cấu hình PC tự động. Bạn cần tôi build cấu hình trong tầm giá bao nhiêu hoặc có yêu cầu linh kiện gì đặc biệt không?',
-      'has_card': false
-    };
   }
 }
