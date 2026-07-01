@@ -20,6 +20,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
     setState(fn);
     _modalSetState?.call(() {});
   }
+
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
@@ -27,11 +28,16 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
   @override
   void initState() {
     super.initState();
-    _messages.add({'text': 'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?', 'isUser': false});
+    _messages.add({
+      'text':
+          'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?',
+      'isUser': false
+    });
   }
 
   void _sendMessage() async {
-    if (_isLoading) return; // Chặn tuyệt đối không cho gửi yêu cầu mới khi hệ thống đang xử lý
+    if (_isLoading)
+      return; // Chặn tuyệt đối không cho gửi yêu cầu mới khi hệ thống đang xử lý
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
@@ -41,9 +47,13 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
     });
     _scrollToBottom();
     final response = await ApiService.sendMessageToChatbot(text);
-    
-    String responseText = response['text'] ?? response['response'] ?? response['message'] ?? response.toString();
-    final RegExp replyRegex = RegExp(r'^\{chatbot_reply:\s*(.*)\}$', dotAll: true);
+
+    String responseText = response['text'] ??
+        response['response'] ??
+        response['message'] ??
+        'Hệ thống trả về dữ liệu không xác định. Vui lòng thử lại.';
+    final RegExp replyRegex =
+        RegExp(r'^\{chatbot_reply:\s*(.*)\}$', dotAll: true);
     final match = replyRegex.firstMatch(responseText);
     if (match != null) {
       responseText = match.group(1) ?? responseText;
@@ -55,10 +65,33 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
         'text': responseText,
         'isUser': false,
         'hasCard': response['has_card'] ?? false,
-        'buildData': response['build_data'] != null ? PcBuild.fromJson(response['build_data']) : null,
+        'buildData': response['build_data'] != null
+            ? PcBuild.fromJson(response['build_data'])
+            : null,
       });
     });
     _scrollToBottom();
+  }
+
+  void _handleRetry(int index) {
+    if (_isLoading) return;
+    
+    if (index > 0 && index < _messages.length) {
+      final userMsgIndex = index - 1;
+      final userMsg = _messages[userMsgIndex];
+      
+      if (userMsg['isUser'] == true) {
+        final text = userMsg['text'];
+        
+        _updateState(() {
+          _messages.removeAt(index); // Xóa tin nhắn lỗi của bot
+          _messages.removeAt(userMsgIndex); // Xóa câu hỏi cũ của user
+        });
+        
+        _controller.text = text; // Điền lại text
+        _sendMessage(); // Tự động gửi lại
+      }
+    }
   }
 
   void _resetChat() async {
@@ -69,14 +102,19 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
     _updateState(() {
       _isLoading = false;
       _messages.clear();
-      _messages.add({'text': 'Đã làm mới phiên tư vấn! Xin chào, tôi có thể giúp gì cho bạn hôm nay?', 'isUser': false});
+      _messages.add({
+        'text':
+            'Đã làm mới phiên tư vấn! Xin chào, tôi có thể giúp gì cho bạn hôm nay?',
+        'isUser': false
+      });
     });
   }
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+        _scrollController.animateTo(_scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     });
   }
@@ -89,13 +127,15 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
             child: Container(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.9,
               ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Material(
                   color: Colors.white,
                   child: StatefulBuilder(
@@ -116,6 +156,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                               isLoading: _isLoading,
                               primary: primary,
                               scrollController: _scrollController,
+                              onRetry: _handleRetry,
                             ),
                           ),
                           _buildInputArea(primary),
@@ -139,7 +180,8 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
     final primary = Theme.of(context).colorScheme.primary;
     final secondary = Theme.of(context).colorScheme.secondary;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth > 600 && MediaQuery.of(context).size.height > 600;
+    final isDesktop =
+        screenWidth > 600 && MediaQuery.of(context).size.height > 600;
     final windowWidth = isDesktop ? 360.0 : screenWidth - 32;
 
     return Stack(
@@ -174,6 +216,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                         isLoading: _isLoading,
                         primary: primary,
                         scrollController: _scrollController,
+                        onRetry: _handleRetry,
                       ),
                     ),
                     _buildInputArea(primary),
@@ -189,8 +232,17 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [primary, secondary], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                boxShadow: [BoxShadow(color: primary.withOpacity(0.4), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 4))],
+                gradient: LinearGradient(
+                    colors: [primary, secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight),
+                boxShadow: [
+                  BoxShadow(
+                      color: primary.withOpacity(0.4),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4))
+                ],
               ),
               child: Material(
                 color: Colors.transparent,
@@ -207,8 +259,15 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                     padding: const EdgeInsets.all(16),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, anim) => RotationTransition(turns: anim, child: child),
-                      child: Icon(_isOpen && isDesktop ? Icons.close : Icons.support_agent_rounded, key: ValueKey(_isOpen), color: Colors.white, size: 24),
+                      transitionBuilder: (child, anim) =>
+                          RotationTransition(turns: anim, child: child),
+                      child: Icon(
+                          _isOpen && isDesktop
+                              ? Icons.close
+                              : Icons.support_agent_rounded,
+                          key: ValueKey(_isOpen),
+                          color: Colors.white,
+                          size: 24),
                     ),
                   ),
                 ),
@@ -224,7 +283,8 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
       padding: const EdgeInsets.all(10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
+        borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
       ),
       child: Row(
         children: [
@@ -237,8 +297,11 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
                 hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
                 filled: true,
                 fillColor: Colors.grey.shade100,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none),
               ),
               onSubmitted: _isLoading ? null : (_) => _sendMessage(),
             ),
@@ -246,7 +309,8 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
           const SizedBox(width: 8),
           IconButton(
             onPressed: _isLoading ? null : _sendMessage,
-            icon: Icon(Icons.send_rounded, color: _isLoading ? Colors.grey.shade400 : primary),
+            icon: Icon(Icons.send_rounded,
+                color: _isLoading ? Colors.grey.shade400 : primary),
           ),
         ],
       ),

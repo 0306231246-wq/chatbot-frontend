@@ -15,7 +15,7 @@ class ApiService {
       'https://customer-outskirts-blubber.ngrok-free.dev';
 
   // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
-  static String baseUrl = localIpUrl;
+  static String baseUrl = ngrokUrl;
 
   // Session ID mặc định cho phiên tư vấn
   static String currentSessionId = 'session_gaming_pc';
@@ -68,21 +68,21 @@ class ApiService {
       } else if (response.statusCode == 500) {
         return {
           'text':
-              'Lỗi hệ thống máy chủ (500). Backend FastAPI đang gặp sự cố, vui lòng thử lại sau!',
+              'Hệ thống đang gặp sự cố. Vui lòng thử lại sau!',
           'has_card': false,
           'success': false,
         };
       } else if (response.statusCode == 504) {
         return {
           'text':
-              'Máy chủ phản hồi quá hạn (504 Timeout). AI Ollama đang bị quá tải, vui lòng thử lại!',
+              'Hệ thống cần thêm thời gian để xử lý. Vui lòng thử lại sau!',
           'has_card': false,
           'success': false,
         };
       } else {
         return {
           'text':
-              'Hệ thống đang bận phản hồi (Mã lỗi: ${response.statusCode}). Vui lòng thử lại sau giây lát!',
+              'Hệ thống đang bận. Vui lòng thử lại sau giây lát!',
           'has_card': false,
           'success': false,
         };
@@ -90,15 +90,15 @@ class ApiService {
     } on TimeoutException catch (_) {
       return {
         'text':
-            'Kết nối vượt quá 60 giây (Timeout). Mô hình Ollama đang xử lý RAG mất nhiều thời gian, vui lòng thử lại!',
+            'Mạng không ổn định hoặc hệ thống đang quá tải. Vui lòng thử lại!',
         'has_card': false,
         'success': false,
       };
     } catch (e) {
-      // Giả lập phản hồi thông minh trong trường hợp chưa bật Backend FastAPI
+      // ignore: avoid_print
+      print('API Error: $e');
       return {
-        'text':
-            'Backend FastAPI chưa bật hoặc không thể kết nối. Vui lòng kiểm tra lại cấu hình baseUrl!',
+        'text': 'Không thể kết nối đến hệ thống. Vui lòng kiểm tra lại đường truyền mạng!',
         'has_card': false,
         'success': false,
       };
@@ -123,4 +123,5 @@ class ApiService {
       return false; // Trả về false nếu backend chưa bật hoặc lỗi kết nối
     }
   }
+
 }
