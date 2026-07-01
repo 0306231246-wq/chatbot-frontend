@@ -46,4 +46,5 @@ app.*.map.json
 # Private API/Auth Keys
 .env
 android/app/google-services.json
+
 note.txt
