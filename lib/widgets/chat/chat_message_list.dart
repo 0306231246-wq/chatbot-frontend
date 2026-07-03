@@ -48,27 +48,31 @@ class ChatMessageList extends StatelessWidget {
               ),
               child: Text(msg['text'], style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 13, height: 1.3)),
             ),
-            if (!isUser) // Thanh công cụ (Copy, Like, Dislike, Retry)
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _MessageActionButton(
-                      icon: Icons.copy_rounded,
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: msg['text']));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Đã sao chép tin nhắn'),
-                            duration: const Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Colors.grey.shade800,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 4),
+            Padding(
+              padding: EdgeInsets.only(
+                left: isUser ? 0 : 4,
+                right: isUser ? 4 : 0,
+                bottom: 8,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _MessageActionButton(
+                    icon: Icons.copy_rounded,
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: msg['text']));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Đã sao chép tin nhắn'),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Colors.grey.shade800,
+                        ),
+                      );
+                    },
+                  ),
+                  if (!isUser) const SizedBox(width: 4),
+                  if (!isUser)
                     _MessageActionButton(
                       icon: Icons.refresh_rounded,
                       onTap: () {
@@ -77,9 +81,9 @@ class ChatMessageList extends StatelessWidget {
                         }
                       },
                     ),
-                  ],
-                ),
+                ],
               ),
+            ),
             if (msg['hasCard'] == true && msg['buildData'] != null)
               _ChatBuildCard(pcBuild: msg['buildData'] as PcBuild, primary: primary),
           ],
