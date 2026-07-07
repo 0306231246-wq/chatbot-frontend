@@ -70,22 +70,19 @@ class ApiService {
         };
       } else if (response.statusCode == 500) {
         return {
-          'text':
-              'Hệ thống đang gặp sự cố. Vui lòng thử lại sau!',
+          'text': 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau!',
           'has_card': false,
           'success': false,
         };
       } else if (response.statusCode == 504) {
         return {
-          'text':
-              'Hệ thống cần thêm thời gian để xử lý. Vui lòng thử lại sau!',
+          'text': 'Hệ thống cần thêm thời gian để xử lý. Vui lòng thử lại sau!',
           'has_card': false,
           'success': false,
         };
       } else {
         return {
-          'text':
-              'Hệ thống đang bận. Vui lòng thử lại sau giây lát!',
+          'text': 'Hệ thống đang bận. Vui lòng thử lại sau giây lát!',
           'has_card': false,
           'success': false,
         };
@@ -101,7 +98,8 @@ class ApiService {
       // ignore: avoid_print
       print('API Error: $e');
       return {
-        'text': 'Không thể kết nối đến hệ thống. Vui lòng kiểm tra lại đường truyền mạng!',
+        'text':
+            'Không thể kết nối đến hệ thống. Vui lòng kiểm tra lại đường truyền mạng!',
         'has_card': false,
         'success': false,
       };
@@ -126,5 +124,4 @@ class ApiService {
       return false; // Trả về false nếu backend chưa bật hoặc lỗi kết nối
     }
   }
-
 }

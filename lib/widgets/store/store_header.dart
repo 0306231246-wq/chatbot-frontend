@@ -5,6 +5,7 @@ import '../../controllers/pc_builder_controller.dart';
 import '../../screens/login_page.dart';
 import 'pc_builder_sheet.dart';
 import '../chat/chat_bot_widget.dart';
+import '../../services/auth_service.dart';
 
 class StoreHeader extends StatelessWidget {
   final MainStoreController controller;
@@ -232,7 +233,7 @@ class StoreHeader extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               onSelected: (val) async {
                 if (val == 'signout') {
-                  await FirebaseAuth.instance.signOut();
+                  await AuthService().signOut();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Đã đăng xuất thành công')),
