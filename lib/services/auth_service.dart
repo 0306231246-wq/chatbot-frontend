@@ -8,8 +8,12 @@ class AuthResult {
   final String? errorMessage;
   final bool success;
 
-  AuthResult.success(this.user) : success = true, errorMessage = null;
-  AuthResult.error(this.errorMessage) : success = false, user = null;
+  AuthResult.success(this.user)
+      : success = true,
+        errorMessage = null;
+  AuthResult.error(this.errorMessage)
+      : success = false,
+        user = null;
 }
 
 class AuthService {
@@ -25,7 +29,8 @@ class AuthService {
 
   Future<AuthResult> signInWithEmail(String email, String password) async {
     try {
-      final cred = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final cred = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
       return AuthResult.success(cred.user);
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
@@ -36,7 +41,8 @@ class AuthService {
 
   Future<AuthResult> signUpWithEmail(String email, String password) async {
     try {
-      final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final cred = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
       // Gửi email xác thực đóng vai trò như một Welcome Email
       await cred.user?.sendEmailVerification();
       return AuthResult.success(cred.user);
@@ -69,13 +75,22 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
     } catch (e) {
-      return AuthResult.error('Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.');
+      return AuthResult.error(
+          'Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.');
     }
   }
 
   Future<void> signOut() async {
     await _auth.signOut();
-    await _googleSignIn.signOut();
+    try {
+      if (await _googleSignIn.isSignedIn() == false) {
+        await _googleSignIn.signInSilently();
+      }
+      await _googleSignIn.disconnect();
+    } catch (_) {}
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
   }
 
   Future<AuthResult> resetPassword(String email) async {
