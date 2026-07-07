@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/pc_build.dart';
 import '../../services/api_service.dart';
 import 'chat_header.dart';
@@ -8,10 +10,10 @@ class ChatBotWidget extends StatefulWidget {
   const ChatBotWidget({super.key});
 
   @override
-  State<ChatBotWidget> createState() => _ChatBotWidgetState();
+  State<ChatBotWidget> createState() => ChatBotWidgetState();
 }
 
-class _ChatBotWidgetState extends State<ChatBotWidget> {
+class ChatBotWidgetState extends State<ChatBotWidget> {
   bool _isOpen = false;
   bool _isLoading = false;
   StateSetter? _modalSetState;
@@ -28,11 +30,57 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
   @override
   void initState() {
     super.initState();
-    _messages.add({
-      'text':
-          'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?',
-      'isUser': false
+    _loadChatHistory();
+  }
+
+  void _loadChatHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyString = prefs.getString('chat_history');
+    if (historyString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(historyString);
+        final List<Map<String, dynamic>> loadedMessages = decoded.map((msg) {
+           return {
+             'text': msg['text'],
+             'isUser': msg['isUser'],
+             'hasCard': msg['hasCard'],
+             'buildData': msg['buildData'] != null ? PcBuild.fromJson(msg['buildData']) : null,
+           };
+        }).toList();
+        
+        if (loadedMessages.isNotEmpty) {
+           _updateState(() {
+             _messages.addAll(loadedMessages);
+           });
+           _scrollToBottom();
+           return;
+        }
+      } catch (e) {
+        print("Lỗi load lịch sử: $e");
+      }
+    }
+    
+    // Nếu không có lịch sử thì thêm câu chào
+    _updateState(() {
+      _messages.add({
+        'text':
+            'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?',
+        'isUser': false
+      });
     });
+  }
+
+  void _saveChatHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<Map<String, dynamic>> toSave = _messages.map((msg) {
+      return {
+        'text': msg['text'],
+        'isUser': msg['isUser'],
+        'hasCard': msg['hasCard'],
+        'buildData': (msg['buildData'] as PcBuild?)?.toJson(),
+      };
+    }).toList();
+    await prefs.setString('chat_history', jsonEncode(toSave));
   }
 
   void _sendMessage() async {
@@ -45,6 +93,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
       _messages.add({'text': text, 'isUser': true});
       _isLoading = true;
     });
+    _saveChatHistory();
     _scrollToBottom();
     final response = await ApiService.sendMessageToChatbot(text);
 
@@ -70,7 +119,22 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
             : null,
       });
     });
+    _saveChatHistory();
     _scrollToBottom();
+  }
+
+  void openAndSendMessage(String msg) {
+    if (!_isOpen) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final isDesktop = screenWidth > 600 && MediaQuery.of(context).size.height > 600;
+      if (isDesktop) {
+        setState(() => _isOpen = true);
+      } else {
+        _showMobileChatBottomSheet(Theme.of(context).colorScheme.primary);
+      }
+    }
+    _controller.text = msg;
+    _sendMessage();
   }
 
   void _handleRetry(int index) {
@@ -87,6 +151,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
           _messages.removeAt(index); // Xóa tin nhắn lỗi của bot
           _messages.removeAt(userMsgIndex); // Xóa câu hỏi cũ của user
         });
+        _saveChatHistory();
         
         _controller.text = text; // Điền lại text
         _sendMessage(); // Tự động gửi lại
@@ -99,6 +164,10 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
       _isLoading = true;
     });
     await ApiService.deleteSession();
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('chat_history');
+
     _updateState(() {
       _isLoading = false;
       _messages.clear();

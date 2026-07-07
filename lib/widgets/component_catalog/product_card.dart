@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '/models/component.dart';
 import 'component_category.dart';
+import '../../controllers/pc_builder_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ProductCard — card sản phẩm, hiển thị spec theo category
@@ -10,12 +11,14 @@ class ProductCard extends StatelessWidget {
   final PcComponent component;
   final ComponentCategory category;
   final String Function(num) formatVnd;
+  final PcBuilderController? pcBuilderController;
 
   const ProductCard({
     super.key,
     required this.component,
     required this.category,
     required this.formatVnd,
+    this.pcBuilderController,
   });
 
   Color get _accentColor {
@@ -44,8 +47,18 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return pcBuilderController != null
+        ? ListenableBuilder(
+            listenable: pcBuilderController!,
+            builder: (context, _) => _buildCard(context),
+          )
+        : _buildCard(context);
+  }
+
+  Widget _buildCard(BuildContext context) {
     final c = component;
     final primary = Theme.of(context).colorScheme.primary;
+    final isSelected = pcBuilderController?.isSelected(c) ?? false;
 
     return Container(
       decoration: BoxDecoration(
@@ -222,18 +235,33 @@ class ProductCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: c.inStock ? () {} : null,
+              onPressed: c.inStock ? () {
+                if (pcBuilderController != null) {
+                  pcBuilderController!.toggleComponent(c, category.name);
+                  if (!isSelected) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Đã thêm ${c.name}. Bấm vào icon góc phải để xem cấu hình.'),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFF1B9E5A),
+                      ),
+                    );
+                  }
+                }
+              } : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2B2B33),
+                backgroundColor: isSelected ? primary : const Color(0xFF2B2B33),
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: Colors.grey.shade300,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
-              icon: Icon(c.inStock ? Icons.add : Icons.remove_shopping_cart,
+              icon: Icon(
+                  !c.inStock ? Icons.remove_shopping_cart : (isSelected ? Icons.check : Icons.add),
                   size: 14),
-              label: Text(c.inStock ? 'Add to build' : 'Hết hàng',
+              label: Text(!c.inStock ? 'Hết hàng' : (isSelected ? '✓ Đã thêm' : 'Add to build'),
                   style: const TextStyle(fontSize: 11)),
             ),
           ),

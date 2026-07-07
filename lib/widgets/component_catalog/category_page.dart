@@ -4,13 +4,15 @@ import '../../controllers/category_controller.dart';
 import 'component_category.dart';
 import 'product_card.dart';
 import 'category_filter_sheet.dart';
+import '../../controllers/pc_builder_controller.dart';
 
 class CategoryPage extends StatefulWidget {
   final ComponentCategory category;
   final List<PcComponent> components;
   final String? searchQuery;
+  final PcBuilderController? pcBuilderController;
 
-  const CategoryPage({super.key, required this.category, required this.components, this.searchQuery});
+  const CategoryPage({super.key, required this.category, required this.components, this.searchQuery, this.pcBuilderController});
 
   @override
   State<CategoryPage> createState() => _CategoryPageState();
@@ -189,6 +191,7 @@ class _CategoryPageState extends State<CategoryPage> {
                     component: items[i],
                     category: widget.category,
                     formatVnd: _formatVnd,
+                    pcBuilderController: widget.pcBuilderController,
                   ),
                 ),
         ),

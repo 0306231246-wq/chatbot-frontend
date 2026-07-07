@@ -3,6 +3,7 @@ import '/models/component.dart';
 import 'component_catalog/component_category.dart';
 import 'component_catalog/category_page.dart';
 import 'component_catalog/catalog_data_generated.dart';
+import '../controllers/pc_builder_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry point — wrapper giữ TabBar
@@ -11,8 +12,9 @@ class ComponentCatalogPage extends StatelessWidget {
   /// Truyền null → dùng sample data xem trước UI
   final List<PcComponent>? components;
   final String? searchQuery;
+  final PcBuilderController? pcBuilderController;
 
-  const ComponentCatalogPage({super.key, this.components, this.searchQuery});
+  const ComponentCatalogPage({super.key, this.components, this.searchQuery, this.pcBuilderController});
 
   List<PcComponent> _forCategory(ComponentCategory cat) {
     final all = components ?? generatedCatalog;
@@ -27,6 +29,7 @@ class ComponentCatalogPage extends StatelessWidget {
           category: cat,
           components: _forCategory(cat),
           searchQuery: searchQuery,
+          pcBuilderController: pcBuilderController,
         );
       }).toList(),
     );

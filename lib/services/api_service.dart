@@ -14,8 +14,11 @@ class ApiService {
   static const String ngrokUrl =
       'https://customer-outskirts-blubber.ngrok-free.dev';
 
+  static const String ngrokUrl1 =
+      'https://container-frisk-plunder.ngrok-free.dev';
+
   // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
-  static String baseUrl = ngrokUrl;
+  static String baseUrl = localIpUrl; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
 
   // Session ID mặc định cho phiên tư vấn
   static String currentSessionId = 'session_gaming_pc';

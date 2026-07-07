@@ -5,6 +5,8 @@ import '../widgets/store/build_list.dart';
 import '../widgets/store/build_filters.dart';
 import '../controllers/main_store_controller.dart';
 import '../widgets/store/store_header.dart';
+import '../controllers/pc_builder_controller.dart';
+import '../widgets/store/pc_builder_sheet.dart';
 
 class MainStorePage extends StatefulWidget {
   const MainStorePage({super.key});
@@ -15,16 +17,20 @@ class MainStorePage extends StatefulWidget {
 
 class _MainStorePageState extends State<MainStorePage> {
   late final MainStoreController _controller;
+  late final PcBuilderController _pcBuilderController;
+  final GlobalKey<ChatBotWidgetState> _chatBotKey = GlobalKey<ChatBotWidgetState>();
 
   @override
   void initState() {
     super.initState();
     _controller = MainStoreController();
+    _pcBuilderController = PcBuilderController();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _pcBuilderController.dispose();
     super.dispose();
   }
 
@@ -48,7 +54,12 @@ class _MainStorePageState extends State<MainStorePage> {
                     floatHeaderSlivers: true,
                     headerSliverBuilder: (context, innerBoxIsScrolled) {
                       return [
-                        StoreHeader(controller: _controller, isDesktop: isDesktop),
+                        StoreHeader(
+                          controller: _controller,
+                          isDesktop: isDesktop,
+                          pcBuilderController: _pcBuilderController,
+                          chatBotKey: _chatBotKey,
+                        ),
                       ];
                     },
                     body: _controller.tab == StoreTab.builds
@@ -73,9 +84,14 @@ class _MainStorePageState extends State<MainStorePage> {
                               Expanded(child: _buildBuildContentArea(isDesktop)),
                             ],
                           )
-                        : ComponentCatalogPage(searchQuery: _controller.globalSearchController.text),
+                        : ComponentCatalogPage(
+                            searchQuery: _controller.globalSearchController.text,
+                            pcBuilderController: _pcBuilderController,
+                          ),
                   ),
-                  const ChatBotWidget(),
+                  Positioned.fill(
+                    child: ChatBotWidget(key: _chatBotKey),
+                  ),
                 ],
               ),
             ),
