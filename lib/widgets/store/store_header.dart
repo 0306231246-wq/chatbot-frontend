@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../controllers/main_store_controller.dart';
+import '../../controllers/pc_builder_controller.dart';
 import '../../screens/login_page.dart';
+import 'pc_builder_sheet.dart';
+import '../chat/chat_bot_widget.dart';
 import '../../services/auth_service.dart';
 
 class StoreHeader extends StatelessWidget {
   final MainStoreController controller;
   final bool isDesktop;
+  final PcBuilderController? pcBuilderController;
+  final GlobalKey<ChatBotWidgetState>? chatBotKey;
 
-  const StoreHeader({super.key, required this.controller, required this.isDesktop});
+  const StoreHeader({
+    super.key,
+    required this.controller,
+    required this.isDesktop,
+    this.pcBuilderController,
+    this.chatBotKey,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +44,8 @@ class StoreHeader extends StatelessWidget {
                   ],
                 ),
                 actions: [
+                  if (pcBuilderController != null && chatBotKey != null)
+                    _buildPcBuilderIcon(context),
                   _buildProBadge(context),
                   _buildAuthButton(context),
                 ],
@@ -45,7 +58,12 @@ class StoreHeader extends StatelessWidget {
               automaticallyImplyLeading: false,
               toolbarHeight: isDesktop ? 56 : 0,
               title: isDesktop ? _buildDesktopTitle(context) : null,
-              actions: isDesktop ? [_buildProBadge(context), _buildAuthButton(context)] : null,
+              actions: isDesktop ? [
+                if (pcBuilderController != null && chatBotKey != null)
+                  _buildPcBuilderIcon(context),
+                _buildProBadge(context),
+                _buildAuthButton(context)
+              ] : null,
               bottom: PreferredSize(
                 preferredSize: Size.fromHeight(isDesktop ? 56 : 104),
                 child: Column(
@@ -73,24 +91,28 @@ class StoreHeader extends StatelessWidget {
                   indicatorWeight: 3,
                   labelColor: Theme.of(context).colorScheme.primary,
                   unselectedLabelColor: Colors.white38,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), // Giảm nhẹ size font
+                  labelPadding: EdgeInsets.zero, // Bỏ padding thừa
                   tabs: const [
                     Tab(
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [Icon(Icons.memory, size: 16), SizedBox(width: 8), Text('CPU')],
+                        children: [Icon(Icons.memory, size: 16), SizedBox(width: 4), Text('CPU', overflow: TextOverflow.ellipsis)],
                       ),
                     ),
                     Tab(
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [Icon(Icons.videogame_asset, size: 16), SizedBox(width: 8), Text('GPU')],
+                        children: [Icon(Icons.videogame_asset, size: 16), SizedBox(width: 4), Text('GPU', overflow: TextOverflow.ellipsis)],
                       ),
                     ),
                     Tab(
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [Icon(Icons.developer_board, size: 16), SizedBox(width: 8), Text('Mainboard')],
+                        children: [Icon(Icons.developer_board, size: 16), SizedBox(width: 4), Flexible(child: Text('Mainboard', overflow: TextOverflow.ellipsis))],
                       ),
                     ),
                   ],
@@ -264,6 +286,55 @@ class StoreHeader extends StatelessWidget {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));
               },
             ),
+    );
+  }
+
+  Widget _buildPcBuilderIcon(BuildContext context) {
+    return ListenableBuilder(
+      listenable: pcBuilderController!,
+      builder: (context, _) {
+        final count = pcBuilderController!.selectedCount;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: Icon(Icons.build_circle_outlined, color: count > 0 ? Theme.of(context).colorScheme.primary : Colors.white),
+              onPressed: () {
+                final tabController = DefaultTabController.of(context);
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => PcBuilderSheet(
+                    controller: pcBuilderController!,
+                    chatBotKey: chatBotKey!,
+                    onNavigateToCategory: (index) {
+                      controller.setTab(StoreTab.components);
+                      tabController.animateTo(index);
+                    },
+                  ),
+                );
+              },
+            ),
+            if (count > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

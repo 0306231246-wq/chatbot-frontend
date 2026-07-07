@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/pc_build.dart';
+
 
 class ApiService {
   // Danh sách 3 Base URL hỗ trợ chuyển đổi nhanh:
@@ -18,7 +18,7 @@ class ApiService {
       'https://container-frisk-plunder.ngrok-free.dev';
 
   // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
-  static String baseUrl = ngrokUrl;
+  static String baseUrl = localIpUrl; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
 
   // Session ID mặc định cho phiên tư vấn
   static String currentSessionId = 'session_gaming_pc';
