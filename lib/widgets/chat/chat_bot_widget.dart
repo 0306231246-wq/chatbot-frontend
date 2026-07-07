@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/pc_build.dart';
 import '../../services/api_service.dart';
 import 'chat_header.dart';
@@ -291,6 +292,7 @@ class _ChatBotWidgetState extends State<ChatBotWidget> {
           Expanded(
             child: TextField(
               controller: _controller,
+              inputFormatters: [LengthLimitingTextInputFormatter(500)],
               style: const TextStyle(color: Colors.black, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Nhập yêu cầu tư vấn PC...',

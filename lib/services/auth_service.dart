@@ -76,7 +76,7 @@ class AuthService {
       return AuthResult.error(_getErrorMessage(e));
     } catch (e) {
       return AuthResult.error(
-          'Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.');
+          'Đăng nhập thất bại. Lỗi: $e');
     }
   }
 
