@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' show User;
 import '../services/auth_service.dart';
+import '../services/auth_session_service.dart';
 import 'main_store_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -26,6 +28,9 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = false);
 
     if (result.success) {
+      final sessionReady = await _activateSingleSession(result.user);
+      if (!sessionReady || !mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Đăng nhập thành công! Chào mừng ${result.user?.displayName ?? result.user?.email}.')),
       );
@@ -116,6 +121,9 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       // NẾU ĐÃ XÁC THỰC (Hoặc đăng nhập bằng Google)
+      final sessionReady = await _activateSingleSession(user);
+      if (!sessionReady || !mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Đăng nhập thành công! Chào mừng ${user?.email}.'),
@@ -141,6 +149,29 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.red.shade800,
         ),
       );
+    }
+  }
+
+  Future<bool> _activateSingleSession(User? user) async {
+    if (user == null) {
+      return false;
+    }
+
+    try {
+      await AuthSessionService.instance.registerActiveSession(user);
+      return true;
+    } catch (_) {
+      await _authService.signOut();
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Không thể kích hoạt phiên đăng nhập. Vui lòng thử lại.',
+          ),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
+      return false;
     }
   }
 

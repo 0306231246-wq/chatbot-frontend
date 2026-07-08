@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'auth_session_service.dart';
 
 class AuthResult {
   final User? user;
@@ -82,6 +83,9 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    try {
+      await AuthSessionService.instance.signOutCurrentSession();
+    } catch (_) {}
     await _auth.signOut();
     try {
       if (await _googleSignIn.isSignedIn() == false) {
