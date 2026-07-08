@@ -13,7 +13,6 @@ class AuthSessionService {
   static final AuthSessionService instance = AuthSessionService._();
 
   static const String _sessionPrefsKey = 'active_session_id';
-  static const String _kickedPrefsKey = 'was_kicked_by_new_session';
   static const String _collection = 'active_sessions';
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -25,7 +24,6 @@ class AuthSessionService {
     final sessionId = _createSessionId();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_sessionPrefsKey, sessionId);
-    await prefs.remove(_kickedPrefsKey);
 
     await _sessionDoc(user.uid).set({
       'sessionId': sessionId,
@@ -60,7 +58,6 @@ class AuthSessionService {
 
       try {
         _isSigningOutBecauseKicked = true;
-        await prefs.setBool(_kickedPrefsKey, true);
         await prefs.remove(_sessionPrefsKey);
         await stopWatching();
         await _auth.signOut();
@@ -92,15 +89,6 @@ class AuthSessionService {
     }
 
     await prefs.remove(_sessionPrefsKey);
-  }
-
-  Future<bool> consumeKickedFlag() async {
-    final prefs = await SharedPreferences.getInstance();
-    final wasKicked = prefs.getBool(_kickedPrefsKey) ?? false;
-    if (wasKicked) {
-      await prefs.remove(_kickedPrefsKey);
-    }
-    return wasKicked;
   }
 
   DocumentReference<Map<String, dynamic>> _sessionDoc(String uid) {

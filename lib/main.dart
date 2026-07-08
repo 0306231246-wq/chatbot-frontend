@@ -105,10 +105,6 @@ class _SessionGuardState extends State<SessionGuard> {
   }
 
   Future<void> _startSessionWatch() async {
-    if (await AuthSessionService.instance.consumeKickedFlag()) {
-      _showKickedMessage();
-    }
-
     await AuthSessionService.instance.startWatching(
       user: widget.user,
       onKicked: _showKickedMessage,
@@ -119,7 +115,7 @@ class _SessionGuardState extends State<SessionGuard> {
     rootScaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
         content: const Text(
-          'This account signed in somewhere else. This session was logged out.',
+          'Tài khoản của bạn đã được đăng nhập từ thiết bị khác. Bạn đã bị đăng xuất.',
         ),
         backgroundColor: Colors.orange.shade800,
         duration: const Duration(seconds: 4),
