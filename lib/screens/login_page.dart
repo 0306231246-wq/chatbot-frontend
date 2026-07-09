@@ -28,9 +28,6 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = false);
 
     if (result.success) {
-      final sessionReady = await _activateSingleSession(result.user);
-      if (!sessionReady || !mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Đăng nhập thành công! Chào mừng ${result.user?.displayName ?? result.user?.email}.')),
       );
@@ -121,9 +118,6 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       // NẾU ĐÃ XÁC THỰC (Hoặc đăng nhập bằng Google)
-      final sessionReady = await _activateSingleSession(user);
-      if (!sessionReady || !mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Đăng nhập thành công! Chào mừng ${user?.email}.'),
@@ -152,28 +146,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<bool> _activateSingleSession(User? user) async {
-    if (user == null) {
-      return false;
-    }
 
-    try {
-      await AuthSessionService.instance.registerActiveSession(user);
-      return true;
-    } catch (_) {
-      await _authService.signOut();
-      if (!mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Không thể kích hoạt phiên đăng nhập. Vui lòng thử lại.',
-          ),
-          backgroundColor: Colors.red.shade800,
-        ),
-      );
-      return false;
-    }
-  }
 
   void _handleForgotPassword() async {
     if (_lastForgotPasswordTime != null) {
