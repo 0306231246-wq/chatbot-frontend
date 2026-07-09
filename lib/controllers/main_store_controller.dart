@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/pc_build.dart';
 import '../data/mock_data.dart';
 
-enum StoreTab { builds, components }
+enum StoreTab { builds, components, myBuilds }
 
 class MainStoreController extends ChangeNotifier {
   StoreTab _tab = StoreTab.builds;

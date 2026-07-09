@@ -4,8 +4,9 @@ import '../../data/mock_data.dart';
 
 class BuildList extends StatelessWidget {
   final List<PcBuild>? builds;
+  final Function(PcBuild)? onApplyBuild;
 
-  const BuildList({super.key, this.builds});
+  const BuildList({super.key, this.builds, this.onApplyBuild});
 
   String _formatVnd(int value) {
     final str = value.toString();
@@ -155,7 +156,13 @@ class BuildList extends StatelessWidget {
                         ],
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () {
+                          if (onApplyBuild != null) {
+                            onApplyBuild!(build);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã thêm cấu hình ${build.buildId} vào giỏ hàng!')));
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2B2B33),
                           foregroundColor: Colors.white,

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/pc_build.dart';
 import '../../services/api_service.dart';
 import 'chat_header.dart';
 import 'chat_message_list.dart';
 
 class ChatBotWidget extends StatefulWidget {
-  const ChatBotWidget({super.key});
+  final Function(PcBuild)? onApplyBuild;
+  const ChatBotWidget({super.key, this.onApplyBuild});
 
   @override
   State<ChatBotWidget> createState() => ChatBotWidgetState();
@@ -35,7 +37,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
 
   void _loadChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    final historyString = prefs.getString('chat_history');
+    final historyString = prefs.getString(_getHistoryKey());
     if (historyString != null) {
       try {
         final List<dynamic> decoded = jsonDecode(historyString);
@@ -70,6 +72,14 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     });
   }
 
+  String _getHistoryKey() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return 'chat_history_${user.uid}';
+    }
+    return 'chat_history_guest';
+  }
+
   void _saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final List<Map<String, dynamic>> toSave = _messages.map((msg) {
@@ -80,7 +90,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
         'buildData': (msg['buildData'] as PcBuild?)?.toJson(),
       };
     }).toList();
-    await prefs.setString('chat_history', jsonEncode(toSave));
+    await prefs.setString(_getHistoryKey(), jsonEncode(toSave));
   }
 
   void _sendMessage() async {
@@ -166,7 +176,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     await ApiService.deleteSession();
     
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('chat_history');
+    await prefs.remove(_getHistoryKey());
 
     _updateState(() {
       _isLoading = false;
@@ -225,6 +235,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                               isLoading: _isLoading,
                               primary: primary,
                               scrollController: _scrollController,
+                              onApplyBuild: widget.onApplyBuild,
                               onRetry: _handleRetry,
                             ),
                           ),
@@ -285,6 +296,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                         isLoading: _isLoading,
                         primary: primary,
                         scrollController: _scrollController,
+                        onApplyBuild: widget.onApplyBuild,
                         onRetry: _handleRetry,
                       ),
                     ),

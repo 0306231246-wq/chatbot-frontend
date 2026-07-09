@@ -8,6 +8,7 @@ class ChatMessageList extends StatelessWidget {
   final Color primary;
   final ScrollController scrollController;
   final Function(int)? onRetry;
+  final Function(PcBuild)? onApplyBuild;
 
   const ChatMessageList({
     super.key,
@@ -16,6 +17,7 @@ class ChatMessageList extends StatelessWidget {
     required this.primary,
     required this.scrollController,
     this.onRetry,
+    this.onApplyBuild,
   });
 
   @override
@@ -85,7 +87,11 @@ class ChatMessageList extends StatelessWidget {
               ),
             ),
             if (msg['hasCard'] == true && msg['buildData'] != null)
-              _ChatBuildCard(pcBuild: msg['buildData'] as PcBuild, primary: primary),
+              _BuildCard(
+                pcBuild: msg['buildData'] as PcBuild,
+                onApplyBuild: onApplyBuild,
+                primary: primary,
+              ),
           ],
         );
       },
@@ -93,11 +99,12 @@ class ChatMessageList extends StatelessWidget {
   }
 }
 
-class _ChatBuildCard extends StatelessWidget {
+class _BuildCard extends StatelessWidget {
   final PcBuild pcBuild;
+  final Function(PcBuild)? onApplyBuild;
   final Color primary;
 
-  const _ChatBuildCard({required this.pcBuild, required this.primary});
+  const _BuildCard({required this.pcBuild, this.onApplyBuild, required this.primary});
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +156,11 @@ class _ChatBuildCard extends StatelessWidget {
                 padding: EdgeInsets.zero,
               ),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã thêm cấu hình ${pcBuild.buildId} vào giỏ hàng!')));
+                if (onApplyBuild != null) {
+                  onApplyBuild!(pcBuild);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã thêm cấu hình ${pcBuild.buildId} vào giỏ hàng!')));
+                }
               },
               child: const Text('ÁP DỤNG CẤU HÌNH', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
             ),

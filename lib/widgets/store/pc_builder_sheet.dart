@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../../controllers/pc_builder_controller.dart';
+import '../../controllers/user_builds_controller.dart';
 import '../../models/component.dart';
+import '../../models/user_build.dart';
 import '../chat/chat_bot_widget.dart';
 
 class PcBuilderSheet extends StatelessWidget {
   final PcBuilderController controller;
+  final UserBuildsController userBuildsController;
   final GlobalKey<ChatBotWidgetState> chatBotKey;
   final void Function(int tabIndex)? onNavigateToCategory;
 
   const PcBuilderSheet({
     super.key,
     required this.controller,
+    required this.userBuildsController,
     required this.chatBotKey,
     this.onNavigateToCategory,
   });
@@ -33,12 +38,129 @@ class PcBuilderSheet extends StatelessWidget {
     chatBotKey.currentState?.openAndSendMessage(prompt);
   }
 
+  // ── Lưu build cá nhân ──────────────────────────────────────────────────
+  void _saveBuild(BuildContext context) {
+    final editingId = controller.editingUserBuildId;
+    final isEditing = editingId != null;
+    
+    // Nếu đang sửa, lấy lại tên cũ (nếu tìm thấy)
+    String oldName = 'Build ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}';
+    if (isEditing) {
+      try {
+        final existing = userBuildsController.builds.firstWhere((b) => b.id == editingId);
+        oldName = existing.name;
+      } catch (_) {}
+    }
+
+    final nameCtrl = TextEditingController(text: oldName);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.bookmark_add_outlined, color: Color(0xFF7C3AED)),
+            const SizedBox(width: 8),
+            Text(isEditing ? 'Cập nhật Tên Build' : 'Đặt tên cho Build',
+                style: const TextStyle(color: Colors.white, fontSize: 17)),
+          ],
+        ),
+        content: TextField(
+          controller: nameCtrl,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Ví dụ: Gaming 2025, Đồ họa cao cấp...',
+            hintStyle: const TextStyle(color: Colors.white30),
+            filled: true,
+            fillColor: const Color(0xFF0D0D12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.white12),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.white12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF7C3AED)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: const Icon(Icons.save_outlined, size: 18),
+            label: Text(isEditing ? 'Cập nhật' : 'Lưu Build'),
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              Navigator.pop(ctx);
+              Navigator.pop(context); // đóng bottom sheet
+              
+              if (isEditing) {
+                userBuildsController.updateBuildComponents(
+                  editingId,
+                  name: name.isEmpty ? oldName : name,
+                  cpuName: controller.selectedCpu?.name,
+                  cpuPrice: controller.selectedCpu?.price,
+                  mainboardName: controller.selectedMainboard?.name,
+                  mainboardPrice: controller.selectedMainboard?.price,
+                  gpuName: controller.selectedGpu?.name,
+                  gpuPrice: controller.selectedGpu?.price,
+                );
+                controller.clearBuild();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Đã cập nhật cấu hình thành công!'),
+                    backgroundColor: Color(0xFF1B9E5A),
+                  ),
+                );
+              } else {
+                final build = UserBuild(
+                  id: const Uuid().v4(),
+                  name: name.isEmpty ? 'Build của tôi' : name,
+                  cpuName: controller.selectedCpu?.name,
+                  cpuPrice: controller.selectedCpu?.price,
+                  mainboardName: controller.selectedMainboard?.name,
+                  mainboardPrice: controller.selectedMainboard?.price,
+                  gpuName: controller.selectedGpu?.name,
+                  gpuPrice: controller.selectedGpu?.price,
+                  createdAt: DateTime.now(),
+                );
+                userBuildsController.addBuild(build);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('💾 Đã lưu build "${build.name}"!'),
+                    backgroundColor: const Color(0xFF7C3AED),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
         final hasEnoughItems = controller.selectedCount >= 2;
+        final hasAnyItem = controller.selectedCount >= 1;
         
         return Container(
           constraints: BoxConstraints(
@@ -130,6 +252,63 @@ class PcBuilderSheet extends StatelessWidget {
                             textAlign: TextAlign.center,
                           ),
                         ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: hasAnyItem
+                                ? const Color(0xFF7C3AED)
+                                : Colors.grey.shade800,
+                            foregroundColor: hasAnyItem
+                                ? Colors.white
+                                : Colors.white38,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                          icon: Icon(controller.editingUserBuildId != null ? Icons.update : Icons.bookmark_add_outlined),
+                          label: Text(
+                              controller.editingUserBuildId != null
+                                  ? '💾 Cập nhật Cấu hình'
+                                  : '💾 Lưu thành Build',
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                          onPressed:
+                              hasAnyItem ? () => _saveBuild(context) : null,
+                        ),
+                      ),
+                      if (controller.editingUserBuildId != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white24),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.close),
+                              label: const Text('Hủy cập nhật', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: () {
+                                controller.clearBuild();
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
+                        ),
+                      if (!hasAnyItem)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6.0),
+                          child: Text(
+                            'Chọn ít nhất 1 linh kiện để lưu build.',
+                            style: TextStyle(color: Colors.white38, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -207,7 +386,13 @@ class PcBuilderSheet extends StatelessWidget {
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(component.imageUrl, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.image)),
+              child: component.imageUrl.isNotEmpty
+                  ? Image.network(
+                      component.imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.black54),
+                    )
+                  : const Icon(Icons.image, color: Colors.black54),
             ),
           ),
           const SizedBox(width: 16),

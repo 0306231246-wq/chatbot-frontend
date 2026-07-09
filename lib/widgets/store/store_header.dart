@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../controllers/main_store_controller.dart';
 import '../../controllers/pc_builder_controller.dart';
+import '../../controllers/user_builds_controller.dart';
 import '../../screens/login_page.dart';
 import 'pc_builder_sheet.dart';
 import '../chat/chat_bot_widget.dart';
@@ -11,6 +12,7 @@ class StoreHeader extends StatelessWidget {
   final MainStoreController controller;
   final bool isDesktop;
   final PcBuilderController? pcBuilderController;
+  final UserBuildsController? userBuildsController;
   final GlobalKey<ChatBotWidgetState>? chatBotKey;
 
   const StoreHeader({
@@ -18,6 +20,7 @@ class StoreHeader extends StatelessWidget {
     required this.controller,
     required this.isDesktop,
     this.pcBuilderController,
+    this.userBuildsController,
     this.chatBotKey,
   });
 
@@ -182,9 +185,11 @@ class StoreHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildTabItem(context, 'Cấu hình PC', controller.tab == StoreTab.builds, () => controller.setTab(StoreTab.builds)),
+          _buildTabItem(context, 'Cấu hình mẫu', controller.tab == StoreTab.builds, () => controller.setTab(StoreTab.builds)),
           const SizedBox(width: 12),
           _buildTabItem(context, 'Linh kiện rời', controller.tab == StoreTab.components, () => controller.setTab(StoreTab.components)),
+          const SizedBox(width: 12),
+          _buildTabItem(context, 'Của tôi', controller.tab == StoreTab.myBuilds, () => controller.setTab(StoreTab.myBuilds)),
         ],
       ),
     );
@@ -307,6 +312,7 @@ class StoreHeader extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   builder: (context) => PcBuilderSheet(
                     controller: pcBuilderController!,
+                    userBuildsController: userBuildsController ?? UserBuildsController(),
                     chatBotKey: chatBotKey!,
                     onNavigateToCategory: (index) {
                       controller.setTab(StoreTab.components);

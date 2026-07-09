@@ -4,8 +4,10 @@ import '../widgets/component_catalog.dart';
 import '../widgets/store/build_list.dart';
 import '../widgets/store/build_filters.dart';
 import '../controllers/main_store_controller.dart';
+import '../controllers/user_builds_controller.dart';
 import '../widgets/store/store_header.dart';
 import '../controllers/pc_builder_controller.dart';
+import '../widgets/store/user_build_list.dart';
 
 
 class MainStorePage extends StatefulWidget {
@@ -18,6 +20,7 @@ class MainStorePage extends StatefulWidget {
 class _MainStorePageState extends State<MainStorePage> {
   late final MainStoreController _controller;
   late final PcBuilderController _pcBuilderController;
+  late final UserBuildsController _userBuildsController;
   final GlobalKey<ChatBotWidgetState> _chatBotKey = GlobalKey<ChatBotWidgetState>();
 
   @override
@@ -25,12 +28,16 @@ class _MainStorePageState extends State<MainStorePage> {
     super.initState();
     _controller = MainStoreController();
     _pcBuilderController = PcBuilderController();
+    _pcBuilderController.loadState();
+    _userBuildsController = UserBuildsController();
+    _userBuildsController.load();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _pcBuilderController.dispose();
+    _userBuildsController.dispose();
     super.dispose();
   }
 
@@ -58,39 +65,23 @@ class _MainStorePageState extends State<MainStorePage> {
                           controller: _controller,
                           isDesktop: isDesktop,
                           pcBuilderController: _pcBuilderController,
+                          userBuildsController: _userBuildsController,
                           chatBotKey: _chatBotKey,
                         ),
                       ];
                     },
-                    body: _controller.tab == StoreTab.builds
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (isDesktop)
-                                BuildFilters(
-                                  isDesktop: isDesktop,
-                                  selectedBrand: _controller.selectedBrand,
-                                  maxBuildPrice: _controller.maxBuildPrice,
-                                  sortOption: _controller.buildSortOption,
-                                  onBrandChanged: (val) => _controller.setSelectedBrand(val),
-                                  onPriceChanged: (val) => _controller.setMaxBuildPrice(val),
-                                  onSortChanged: (val) => _controller.setBuildSortOption(val),
-                                  onClear: () {
-                                    _controller.setSelectedBrand('All');
-                                    _controller.setMaxBuildPrice(100000000.0);
-                                    _controller.setBuildSortOption('Mặc định');
-                                  },
-                                ),
-                              Expanded(child: _buildBuildContentArea(isDesktop)),
-                            ],
-                          )
-                        : ComponentCatalogPage(
-                            searchQuery: _controller.globalSearchController.text,
-                            pcBuilderController: _pcBuilderController,
-                          ),
+                    body: _buildBody(isDesktop),
                   ),
                   Positioned.fill(
-                    child: ChatBotWidget(key: _chatBotKey),
+                    child: ChatBotWidget(
+                      key: _chatBotKey,
+                      onApplyBuild: (build) {
+                        _pcBuilderController.applyBuild(build);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Đã nạp cấu hình ${build.buildId} vào Tự Build PC!')),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -99,6 +90,56 @@ class _MainStorePageState extends State<MainStorePage> {
         );
       },
     );
+  }
+
+  Widget _buildBody(bool isDesktop) {
+    switch (_controller.tab) {
+      case StoreTab.builds:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isDesktop)
+              BuildFilters(
+                isDesktop: isDesktop,
+                selectedBrand: _controller.selectedBrand,
+                maxBuildPrice: _controller.maxBuildPrice,
+                sortOption: _controller.buildSortOption,
+                onBrandChanged: (val) => _controller.setSelectedBrand(val),
+                onPriceChanged: (val) => _controller.setMaxBuildPrice(val),
+                onSortChanged: (val) => _controller.setBuildSortOption(val),
+                onClear: () {
+                  _controller.setSelectedBrand('All');
+                  _controller.setMaxBuildPrice(100000000.0);
+                  _controller.setBuildSortOption('Mặc định');
+                },
+              ),
+            Expanded(child: _buildBuildContentArea(isDesktop)),
+          ],
+        );
+      case StoreTab.components:
+        return ComponentCatalogPage(
+          searchQuery: _controller.globalSearchController.text,
+          pcBuilderController: _pcBuilderController,
+        );
+      case StoreTab.myBuilds:
+        return CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: Text('Cấu hình đã lưu',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            UserBuildList(
+              controller: _userBuildsController,
+              pcBuilderController: _pcBuilderController,
+              mainStoreController: _controller,
+              chatBotKey: _chatBotKey,
+            ),
+          ],
+        );
+    }
   }
 
   Widget _buildBuildContentArea(bool isDesktop) {
@@ -131,9 +172,18 @@ class _MainStorePageState extends State<MainStorePage> {
             ),
           ),
         ),
+        // ── Danh sách build gợi ý ──────────────────────────────────────────
         SliverPadding(
           padding: const EdgeInsets.all(16.0),
-          sliver: BuildList(builds: items),
+          sliver: BuildList(
+            builds: items,
+            onApplyBuild: (build) {
+              _pcBuilderController.applyBuild(build);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Đã nạp cấu hình ${build.buildId} vào Tự Build PC!')),
+              );
+            },
+          ),
         ),
       ],
     );
