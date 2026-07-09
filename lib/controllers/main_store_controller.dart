@@ -50,6 +50,10 @@ class MainStoreController extends ChangeNotifier {
     }
   }
 
+  void refresh() {
+    notifyListeners();
+  }
+
   String _brandOf(PcBuild build) => build.cpuModel.toLowerCase().contains('intel') ? 'Intel' : 'AMD';
 
   List<PcBuild> get filteredBuilds {

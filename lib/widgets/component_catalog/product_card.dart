@@ -12,6 +12,7 @@ class ProductCard extends StatelessWidget {
   final ComponentCategory category;
   final String Function(num) formatVnd;
   final PcBuilderController? pcBuilderController;
+  final VoidCallback? onEditingComponentSelected;
 
   const ProductCard({
     super.key,
@@ -19,6 +20,7 @@ class ProductCard extends StatelessWidget {
     required this.category,
     required this.formatVnd,
     this.pcBuilderController,
+    this.onEditingComponentSelected,
   });
 
   Color get _accentColor {
@@ -106,9 +108,10 @@ class ProductCard extends StatelessWidget {
                               color: Colors.white,
                               padding: const EdgeInsets.all(24),
                               child: c.imageUrl.startsWith('assets/')
-                                  ? Image.asset(c.imageUrl, fit: BoxFit.contain)
+                                  ? Image.asset(c.imageUrl,
+                                      fit: BoxFit.contain, cacheWidth: 512)
                                   : Image.network(c.imageUrl,
-                                      fit: BoxFit.contain),
+                                      fit: BoxFit.contain, cacheWidth: 512),
                             ),
                           ),
                         ),
@@ -151,12 +154,14 @@ class ProductCard extends StatelessWidget {
                         child: c.imageUrl.startsWith('assets/')
                             ? Image.asset(c.imageUrl,
                                 fit: BoxFit.contain,
+                                cacheWidth: 220,
                                 errorBuilder: (_, __, ___) => Icon(
                                     _categoryIcon,
                                     size: 40,
                                     color: _accentColor))
                             : Image.network(c.imageUrl,
                                 fit: BoxFit.contain,
+                                cacheWidth: 220,
                                 errorBuilder: (_, __, ___) => Icon(
                                     _categoryIcon,
                                     size: 40,
@@ -235,21 +240,28 @@ class ProductCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: c.inStock ? () {
-                if (pcBuilderController != null) {
-                  pcBuilderController!.toggleComponent(c, category.name);
-                  if (!isSelected) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Đã thêm ${c.name}. Bấm vào icon góc phải để xem cấu hình.'),
-                        duration: const Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: const Color(0xFF1B9E5A),
-                      ),
-                    );
-                  }
-                }
-              } : null,
+              onPressed: c.inStock
+                  ? () {
+                      if (pcBuilderController != null) {
+                        pcBuilderController!.toggleComponent(c, category.name);
+                        if (!isSelected) {
+                          if (pcBuilderController!.editingUserBuildId != null) {
+                            onEditingComponentSelected?.call();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Đã thêm ${c.name}. Bấm vào icon góc phải để xem cấu hình.'),
+                                duration: const Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: const Color(0xFF1B9E5A),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSelected ? primary : const Color(0xFF2B2B33),
                 foregroundColor: Colors.white,
@@ -259,9 +271,14 @@ class ProductCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8)),
               ),
               icon: Icon(
-                  !c.inStock ? Icons.remove_shopping_cart : (isSelected ? Icons.check : Icons.add),
+                  !c.inStock
+                      ? Icons.remove_shopping_cart
+                      : (isSelected ? Icons.check : Icons.add),
                   size: 14),
-              label: Text(!c.inStock ? 'Hết hàng' : (isSelected ? 'Đã thêm' : 'Add to build'),
+              label: Text(
+                  !c.inStock
+                      ? 'Hết hàng'
+                      : (isSelected ? 'Đã thêm' : 'Add to build'),
                   style: const TextStyle(fontSize: 11)),
             ),
           ),

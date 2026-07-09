@@ -160,7 +160,9 @@ class BuildList extends StatelessWidget {
                           if (onApplyBuild != null) {
                             onApplyBuild!(build);
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã thêm cấu hình ${build.buildId} vào giỏ hàng!')));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                                    'Đã thêm cấu hình ${build.buildId} vào giỏ hàng!')));
                           }
                         },
                         style: ElevatedButton.styleFrom(

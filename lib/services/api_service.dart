@@ -18,7 +18,7 @@ class ApiService {
       'https://container-frisk-plunder.ngrok-free.dev';
 
   // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
-  static String baseUrl = ngrokUrl1; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
+  static String baseUrl = ngrokUrl; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
 
   // Session ID mặc định cho phiên tư vấn
   static String currentSessionId = 'session_gaming_pc';

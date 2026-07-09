@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'auth_session_service.dart';
@@ -109,6 +110,47 @@ class AuthService {
     }
   }
 
+  Future<AuthResult> updateProfile({
+    required String displayName,
+    String? photoUrl, // This will now receive the base64 string
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return AuthResult.error('Bạn cần đăng nhập để cập nhật hồ sơ.');
+      }
+
+      await user.updateDisplayName(displayName.trim());
+
+      if (photoUrl != null && photoUrl.trim().isNotEmpty) {
+        final cleanPhotoUrl = photoUrl.trim();
+        // Save base64 to Firestore instead of FirebaseAuth photoURL
+        if (cleanPhotoUrl.startsWith('data:image')) {
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'photoBase64': cleanPhotoUrl,
+          }, SetOptions(merge: true));
+          clearAvatarCache(user.uid);
+          // Set a dummy URL so FirebaseAuth knows user has an avatar
+          await user.updatePhotoURL('firestore_base64');
+        } else {
+          await user.updatePhotoURL(cleanPhotoUrl);
+        }
+      } else if (photoUrl != null && photoUrl.trim().isEmpty) {
+        await user.updatePhotoURL(null);
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'photoBase64': FieldValue.delete(),
+        });
+        clearAvatarCache(user.uid);
+      }
+      await user.reload();
+      return AuthResult.success(_auth.currentUser);
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.error(_getErrorMessage(e));
+    } catch (e) {
+      return AuthResult.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
+    }
+  }
+
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -126,5 +168,29 @@ class AuthService {
       default:
         return 'Lỗi xác thực: ${e.message}';
     }
+  }
+
+  // --- Avatar Caching for Firestore ---
+  static final Map<String, String> _avatarCache = {};
+
+  static Future<String?> getProfileAvatar(String uid) async {
+    if (_avatarCache.containsKey(uid)) {
+      return _avatarCache[uid];
+    }
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final base64 = doc.data()?['photoBase64'] as String?;
+        if (base64 != null) {
+          _avatarCache[uid] = base64;
+          return base64;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+  
+  static void clearAvatarCache(String uid) {
+    _avatarCache.remove(uid);
   }
 }

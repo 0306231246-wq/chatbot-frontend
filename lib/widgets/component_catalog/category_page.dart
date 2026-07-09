@@ -11,8 +11,16 @@ class CategoryPage extends StatefulWidget {
   final List<PcComponent> components;
   final String? searchQuery;
   final PcBuilderController? pcBuilderController;
+  final VoidCallback? onEditingComponentSelected;
 
-  const CategoryPage({super.key, required this.category, required this.components, this.searchQuery, this.pcBuilderController});
+  const CategoryPage({
+    super.key,
+    required this.category,
+    required this.components,
+    this.searchQuery,
+    this.pcBuilderController,
+    this.onEditingComponentSelected,
+  });
 
   @override
   State<CategoryPage> createState() => _CategoryPageState();
@@ -62,7 +70,9 @@ class _CategoryPageState extends State<CategoryPage> {
                   margin: const EdgeInsets.only(top: 16),
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2)),
                 ),
                 Expanded(
                   child: CategoryFilterSheet(
@@ -80,10 +90,14 @@ class _CategoryPageState extends State<CategoryPage> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Xem kết quả', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('Xem kết quả',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -103,7 +117,8 @@ class _CategoryPageState extends State<CategoryPage> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        final filtered = _controller.getFiltered(widget.components, widget.searchQuery);
+        final filtered =
+            _controller.getFiltered(widget.components, widget.searchQuery);
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -143,21 +158,29 @@ class _CategoryPageState extends State<CategoryPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Tìm thấy ${items.length} sản phẩm phù hợp',
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ] else ...[
                   Wrap(
-                    spacing: 16, runSpacing: 12,
+                    spacing: 16,
+                    runSpacing: 12,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Hiển thị ${items.length} sản phẩm phù hợp',
-                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
                           Text('trên tổng $total sản phẩm',
-                              style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                              style: const TextStyle(
+                                  color: Colors.white38, fontSize: 12)),
                         ],
                       ),
                       _buildSortDropdown(isDesktop),
@@ -175,7 +198,8 @@ class _CategoryPageState extends State<CategoryPage> {
                   child: Center(
                     child: Padding(
                       padding: EdgeInsets.all(32.0),
-                      child: Text('Không tìm thấy linh kiện phù hợp.', style: TextStyle(color: Colors.white38)),
+                      child: Text('Không tìm thấy linh kiện phù hợp.',
+                          style: TextStyle(color: Colors.white38)),
                     ),
                   ),
                 )
@@ -192,6 +216,8 @@ class _CategoryPageState extends State<CategoryPage> {
                     category: widget.category,
                     formatVnd: _formatVnd,
                     pcBuilderController: widget.pcBuilderController,
+                    onEditingComponentSelected:
+                        widget.onEditingComponentSelected,
                   ),
                 ),
         ),
@@ -219,7 +245,9 @@ class _CategoryPageState extends State<CategoryPage> {
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: const Color(0xFF1A1A22), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+          color: const Color(0xFF1A1A22),
+          borderRadius: BorderRadius.circular(10)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _controller.sortOption,

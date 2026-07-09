@@ -29,6 +29,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _inputFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -43,26 +44,28 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
       try {
         final List<dynamic> decoded = jsonDecode(historyString);
         final List<Map<String, dynamic>> loadedMessages = decoded.map((msg) {
-           return {
-             'text': msg['text'],
-             'isUser': msg['isUser'],
-             'hasCard': msg['hasCard'],
-             'buildData': msg['buildData'] != null ? PcBuild.fromJson(msg['buildData']) : null,
-           };
+          return {
+            'text': msg['text'],
+            'isUser': msg['isUser'],
+            'hasCard': msg['hasCard'],
+            'buildData': msg['buildData'] != null
+                ? PcBuild.fromJson(msg['buildData'])
+                : null,
+          };
         }).toList();
-        
+
         if (loadedMessages.isNotEmpty) {
-           _updateState(() {
-             _messages.addAll(loadedMessages);
-           });
-           _scrollToBottom();
-           return;
+          _updateState(() {
+            _messages.addAll(loadedMessages);
+          });
+          _scrollToBottom();
+          return;
         }
       } catch (e) {
         print("Lỗi load lịch sử: $e");
       }
     }
-    
+
     // Nếu không có lịch sử thì thêm câu chào
     _updateState(() {
       _messages.add({
@@ -135,35 +138,49 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
   }
 
   void openAndSendMessage(String msg) {
+    _openChat();
+    _controller.text = msg;
+    _sendMessage();
+  }
+
+  void openWithDraftMessage(String msg) {
+    _openChat();
+    _controller.text = msg;
+    _controller.selection = TextSelection.collapsed(offset: msg.length);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _inputFocusNode.requestFocus();
+    });
+  }
+
+  void _openChat() {
     if (!_isOpen) {
       final screenWidth = MediaQuery.of(context).size.width;
-      final isDesktop = screenWidth > 600 && MediaQuery.of(context).size.height > 600;
+      final isDesktop =
+          screenWidth > 600 && MediaQuery.of(context).size.height > 600;
       if (isDesktop) {
         setState(() => _isOpen = true);
       } else {
         _showMobileChatBottomSheet(Theme.of(context).colorScheme.primary);
       }
     }
-    _controller.text = msg;
-    _sendMessage();
   }
 
   void _handleRetry(int index) {
     if (_isLoading) return;
-    
+
     if (index > 0 && index < _messages.length) {
       final userMsgIndex = index - 1;
       final userMsg = _messages[userMsgIndex];
-      
+
       if (userMsg['isUser'] == true) {
         final text = userMsg['text'];
-        
+
         _updateState(() {
           _messages.removeAt(index); // Xóa tin nhắn lỗi của bot
           _messages.removeAt(userMsgIndex); // Xóa câu hỏi cũ của user
         });
         _saveChatHistory();
-        
+
         _controller.text = text; // Điền lại text
         _sendMessage(); // Tự động gửi lại
       }
@@ -175,7 +192,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
       _isLoading = true;
     });
     await ApiService.deleteSession();
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_getHistoryKey());
 
@@ -254,6 +271,14 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     ).whenComplete(() {
       _modalSetState = null;
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    _inputFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -373,7 +398,11 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
           Expanded(
             child: TextField(
               controller: _controller,
+              focusNode: _inputFocusNode,
               inputFormatters: [LengthLimitingTextInputFormatter(500)],
+              keyboardType: TextInputType.multiline,
+              minLines: 1,
+              maxLines: 4,
               style: const TextStyle(color: Colors.black, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Nhập yêu cầu tư vấn PC...',

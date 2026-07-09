@@ -7,48 +7,60 @@ import '../models/pc_build.dart';
 import '../models/user_build.dart';
 import '../widgets/component_catalog/catalog_data_generated.dart';
 
+final Map<String, String> _catalogImageByName = {
+  for (final c in generatedCatalog) c.name: c.imageUrl,
+};
+
 class PcBuilderController extends ChangeNotifier {
   PcComponent? _selectedCpu;
   PcComponent? _selectedMainboard;
   PcComponent? _selectedGpu;
   String? _editingUserBuildId;
+  bool _isPrebuiltSelection = false;
 
   PcComponent? get selectedCpu => _selectedCpu;
   PcComponent? get selectedMainboard => _selectedMainboard;
   PcComponent? get selectedGpu => _selectedGpu;
   String? get editingUserBuildId => _editingUserBuildId;
+  bool get isPrebuiltSelection => _isPrebuiltSelection;
 
   void selectCpu(PcComponent component) {
+    _isPrebuiltSelection = false;
     _selectedCpu = component;
     notifyListeners();
     saveState();
   }
 
   void removeCpu() {
+    _isPrebuiltSelection = false;
     _selectedCpu = null;
     notifyListeners();
     saveState();
   }
 
   void selectMainboard(PcComponent component) {
+    _isPrebuiltSelection = false;
     _selectedMainboard = component;
     notifyListeners();
     saveState();
   }
 
   void removeMainboard() {
+    _isPrebuiltSelection = false;
     _selectedMainboard = null;
     notifyListeners();
     saveState();
   }
 
   void selectGpu(PcComponent component) {
+    _isPrebuiltSelection = false;
     _selectedGpu = component;
     notifyListeners();
     saveState();
   }
 
   void removeGpu() {
+    _isPrebuiltSelection = false;
     _selectedGpu = null;
     notifyListeners();
     saveState();
@@ -89,6 +101,11 @@ class PcBuilderController extends ChangeNotifier {
     return total;
   }
 
+  String _imageForName(String? name) {
+    if (name == null || name.isEmpty) return '';
+    return _catalogImageByName[name] ?? '';
+  }
+
   String _getStorageKey() {
     final user = FirebaseAuth.instance.currentUser;
     return user != null ? 'builder_state_${user.uid}' : 'builder_state_guest';
@@ -103,6 +120,7 @@ class PcBuilderController extends ChangeNotifier {
         if (decoded['cpu'] != null) _selectedCpu = PcComponent.fromJson(decoded['cpu']);
         if (decoded['mainboard'] != null) _selectedMainboard = PcComponent.fromJson(decoded['mainboard']);
         if (decoded['gpu'] != null) _selectedGpu = PcComponent.fromJson(decoded['gpu']);
+        _isPrebuiltSelection = decoded['isPrebuiltSelection'] == true;
         notifyListeners();
       } catch (e) {
         print("Lỗi load builder state: $e");
@@ -116,22 +134,19 @@ class PcBuilderController extends ChangeNotifier {
       if (_selectedCpu != null) 'cpu': _selectedCpu!.toJson(),
       if (_selectedMainboard != null) 'mainboard': _selectedMainboard!.toJson(),
       if (_selectedGpu != null) 'gpu': _selectedGpu!.toJson(),
+      'isPrebuiltSelection': _isPrebuiltSelection,
     };
     await prefs.setString(_getStorageKey(), jsonEncode(data));
   }
 
   void applyBuild(PcBuild build) {
     _editingUserBuildId = null;
+    _isPrebuiltSelection = true;
     
     // Tìm image URL từ catalog nếu có
-    String cpuImg = '';
-    String mbImg = '';
-    String gpuImg = '';
-    for (final c in generatedCatalog) {
-      if (c.name == build.cpuModel) cpuImg = c.imageUrl;
-      if (c.name == build.motherboardModel) mbImg = c.imageUrl;
-      if (c.name == build.gpuModel) gpuImg = c.imageUrl;
-    }
+    final cpuImg = _imageForName(build.cpuModel);
+    final mbImg = _imageForName(build.motherboardModel);
+    final gpuImg = _imageForName(build.gpuModel);
 
     _selectedCpu = PcComponent(
       id: 'cpu_${build.cpuModel.hashCode}',
@@ -169,22 +184,19 @@ class PcBuilderController extends ChangeNotifier {
     _selectedMainboard = null;
     _selectedGpu = null;
     _editingUserBuildId = null;
+    _isPrebuiltSelection = false;
     notifyListeners();
     saveState();
   }
 
   void loadUserBuild(UserBuild build) {
     _editingUserBuildId = build.id;
+    _isPrebuiltSelection = false;
     
     // Tìm image URL từ catalog nếu có
-    String cpuImg = '';
-    String mbImg = '';
-    String gpuImg = '';
-    for (final c in generatedCatalog) {
-      if (build.cpuName != null && c.name == build.cpuName) cpuImg = c.imageUrl;
-      if (build.mainboardName != null && c.name == build.mainboardName) mbImg = c.imageUrl;
-      if (build.gpuName != null && c.name == build.gpuName) gpuImg = c.imageUrl;
-    }
+    final cpuImg = _imageForName(build.cpuName);
+    final mbImg = _imageForName(build.mainboardName);
+    final gpuImg = _imageForName(build.gpuName);
 
     _selectedCpu = build.cpuName != null ? PcComponent(
       id: 'cpu_${build.cpuName.hashCode}',
