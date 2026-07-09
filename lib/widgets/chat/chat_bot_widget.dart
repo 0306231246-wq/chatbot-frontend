@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -372,6 +373,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
           Expanded(
             child: TextField(
               controller: _controller,
+              inputFormatters: [LengthLimitingTextInputFormatter(500)],
               style: const TextStyle(color: Colors.black, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Nhập yêu cầu tư vấn PC...',

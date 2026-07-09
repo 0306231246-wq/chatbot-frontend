@@ -261,7 +261,7 @@ class ProductCard extends StatelessWidget {
               icon: Icon(
                   !c.inStock ? Icons.remove_shopping_cart : (isSelected ? Icons.check : Icons.add),
                   size: 14),
-              label: Text(!c.inStock ? 'Hết hàng' : (isSelected ? '✓ Đã thêm' : 'Add to build'),
+              label: Text(!c.inStock ? 'Hết hàng' : (isSelected ? 'Đã thêm' : 'Add to build'),
                   style: const TextStyle(fontSize: 11)),
             ),
           ),
