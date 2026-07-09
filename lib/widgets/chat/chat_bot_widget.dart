@@ -97,18 +97,23 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     await prefs.setString(_getHistoryKey(), jsonEncode(toSave));
   }
 
-  void _sendMessage() async {
-    if (_isLoading)
-      return; // Chặn tuyệt đối không cho gửi yêu cầu mới khi hệ thống đang xử lý
+  void _sendMessage() {
+    if (_isLoading) return;
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    
     _controller.clear();
+    _processMessage(text);
+  }
+
+  void _processMessage(String text) async {
     _updateState(() {
       _messages.add({'text': text, 'isUser': true});
       _isLoading = true;
     });
     _saveChatHistory();
     _scrollToBottom();
+    
     final response = await ApiService.sendMessageToChatbot(text);
 
     String responseText = response['text'] ??
@@ -181,8 +186,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
         });
         _saveChatHistory();
 
-        _controller.text = text; // Điền lại text
-        _sendMessage(); // Tự động gửi lại
+        _processMessage(text);
       }
     }
   }

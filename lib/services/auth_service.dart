@@ -126,7 +126,10 @@ class AuthService {
         final cleanPhotoUrl = photoUrl.trim();
         // Save base64 to Firestore instead of FirebaseAuth photoURL
         if (cleanPhotoUrl.startsWith('data:image')) {
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({
             'photoBase64': cleanPhotoUrl,
           }, SetOptions(merge: true));
           clearAvatarCache(user.uid);
@@ -137,7 +140,10 @@ class AuthService {
         }
       } else if (photoUrl != null && photoUrl.trim().isEmpty) {
         await user.updatePhotoURL(null);
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
           'photoBase64': FieldValue.delete(),
         });
         clearAvatarCache(user.uid);
@@ -178,7 +184,8 @@ class AuthService {
       return _avatarCache[uid];
     }
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists) {
         final base64 = doc.data()?['photoBase64'] as String?;
         if (base64 != null) {
@@ -189,7 +196,7 @@ class AuthService {
     } catch (_) {}
     return null;
   }
-  
+
   static void clearAvatarCache(String uid) {
     _avatarCache.remove(uid);
   }

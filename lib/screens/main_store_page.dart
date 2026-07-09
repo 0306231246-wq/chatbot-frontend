@@ -175,7 +175,6 @@ class _MainStorePageState extends State<MainStorePage> {
     );
   }
 
-
   Widget _buildBody(bool isDesktop) {
     switch (_controller.tab) {
       case StoreTab.builds:
