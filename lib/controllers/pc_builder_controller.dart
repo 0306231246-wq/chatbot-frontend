@@ -17,12 +17,14 @@ class PcBuilderController extends ChangeNotifier {
   PcComponent? _selectedGpu;
   String? _editingUserBuildId;
   bool _isPrebuiltSelection = false;
+  String? _prebuiltId;
 
   PcComponent? get selectedCpu => _selectedCpu;
   PcComponent? get selectedMainboard => _selectedMainboard;
   PcComponent? get selectedGpu => _selectedGpu;
   String? get editingUserBuildId => _editingUserBuildId;
   bool get isPrebuiltSelection => _isPrebuiltSelection;
+  String? get prebuiltId => _prebuiltId;
 
   void selectCpu(PcComponent component) {
     _isPrebuiltSelection = false;
@@ -140,8 +142,9 @@ class PcBuilderController extends ChangeNotifier {
   }
 
   void applyBuild(PcBuild build) {
-    _editingUserBuildId = null;
     _isPrebuiltSelection = true;
+    _prebuiltId = build.buildId;
+    _editingUserBuildId = null;
     
     // Tìm image URL từ catalog nếu có
     final cpuImg = _imageForName(build.cpuModel);
@@ -185,6 +188,7 @@ class PcBuilderController extends ChangeNotifier {
     _selectedGpu = null;
     _editingUserBuildId = null;
     _isPrebuiltSelection = false;
+    _prebuiltId = null;
     notifyListeners();
     saveState();
   }
@@ -192,6 +196,7 @@ class PcBuilderController extends ChangeNotifier {
   void loadUserBuild(UserBuild build) {
     _editingUserBuildId = build.id;
     _isPrebuiltSelection = false;
+    _prebuiltId = null;
     
     // Tìm image URL từ catalog nếu có
     final cpuImg = _imageForName(build.cpuName);

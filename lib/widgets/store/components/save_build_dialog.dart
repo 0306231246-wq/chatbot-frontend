@@ -4,7 +4,7 @@ import '../../../controllers/pc_builder_controller.dart';
 import '../../../controllers/user_builds_controller.dart';
 import '../../../models/user_build.dart';
 
-class SaveBuildDialog extends StatelessWidget {
+class SaveBuildDialog extends StatefulWidget {
   final PcBuilderController controller;
   final UserBuildsController userBuildsController;
   final VoidCallback? onSaved;
@@ -19,19 +19,43 @@ class SaveBuildDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final editingId = controller.editingUserBuildId;
+  State<SaveBuildDialog> createState() => _SaveBuildDialogState();
+}
+
+class _SaveBuildDialogState extends State<SaveBuildDialog> {
+  late final TextEditingController _nameCtrl;
+  String _oldName = '';
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    final editingId = widget.controller.editingUserBuildId;
     final isEditing = editingId != null;
 
-    String oldName = 'Build ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}';
+    _oldName =
+        'Build ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}';
     if (isEditing) {
       try {
-        final existing = userBuildsController.builds.firstWhere((b) => b.id == editingId);
-        oldName = existing.name;
+        final existing = widget.userBuildsController.builds
+            .firstWhere((b) => b.id == editingId);
+        _oldName = existing.name;
       } catch (_) {}
     }
 
-    final nameCtrl = TextEditingController(text: oldName);
+    _nameCtrl = TextEditingController(text: _oldName);
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final editingId = widget.controller.editingUserBuildId;
+    final isEditing = editingId != null;
 
     return AlertDialog(
       backgroundColor: const Color(0xFF1A1A2E),
@@ -45,12 +69,18 @@ class SaveBuildDialog extends StatelessWidget {
         ],
       ),
       content: TextField(
-        controller: nameCtrl,
+        controller: _nameCtrl,
         autofocus: true,
         style: const TextStyle(color: Colors.white),
+        onChanged: (_) {
+          if (_errorText != null) {
+            setState(() => _errorText = null);
+          }
+        },
         decoration: InputDecoration(
           hintText: 'Ví dụ: Gaming 2025, Đồ họa cao cấp...',
           hintStyle: const TextStyle(color: Colors.white30),
+          errorText: _errorText,
           filled: true,
           fillColor: const Color(0xFF0D0D12),
           border: OutlineInputBorder(
@@ -76,28 +106,42 @@ class SaveBuildDialog extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF7C3AED),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           icon: const Icon(Icons.save_outlined, size: 18),
           label: Text(isEditing ? 'Cập nhật' : 'Lưu Build'),
           onPressed: () {
-            final name = nameCtrl.text.trim();
+            final name = _nameCtrl.text.trim();
+            final finalName = name.isEmpty ? _oldName : name;
+
+            final isDuplicate = widget.userBuildsController.builds.any((b) =>
+                b.name.toLowerCase() == finalName.toLowerCase() &&
+                b.id != editingId);
+
+            if (isDuplicate) {
+              setState(() {
+                _errorText = 'Tên cấu hình đã tồn tại!';
+              });
+              return;
+            }
+
             Navigator.pop(context); // close dialog
-            onDialogClose(); // close sheet
+            widget.onDialogClose(); // close sheet
 
             if (isEditing) {
-              userBuildsController.updateBuildComponents(
+              widget.userBuildsController.updateBuildComponents(
                 editingId,
-                name: name.isEmpty ? oldName : name,
-                cpuName: controller.selectedCpu?.name,
-                cpuPrice: controller.selectedCpu?.price,
-                mainboardName: controller.selectedMainboard?.name,
-                mainboardPrice: controller.selectedMainboard?.price,
-                gpuName: controller.selectedGpu?.name,
-                gpuPrice: controller.selectedGpu?.price,
+                name: finalName,
+                cpuName: widget.controller.selectedCpu?.name,
+                cpuPrice: widget.controller.selectedCpu?.price,
+                mainboardName: widget.controller.selectedMainboard?.name,
+                mainboardPrice: widget.controller.selectedMainboard?.price,
+                gpuName: widget.controller.selectedGpu?.name,
+                gpuPrice: widget.controller.selectedGpu?.price,
               );
-              controller.clearBuild();
-              onSaved?.call();
+              widget.controller.clearBuild();
+              widget.onSaved?.call();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('✅ Đã cập nhật cấu hình thành công!'),
@@ -105,22 +149,23 @@ class SaveBuildDialog extends StatelessWidget {
                 ),
               );
             } else {
-              final build = UserBuild(
+              final newBuild = UserBuild(
                 id: const Uuid().v4(),
-                name: name.isEmpty ? 'Build của tôi' : name,
-                cpuName: controller.selectedCpu?.name,
-                cpuPrice: controller.selectedCpu?.price,
-                mainboardName: controller.selectedMainboard?.name,
-                mainboardPrice: controller.selectedMainboard?.price,
-                gpuName: controller.selectedGpu?.name,
-                gpuPrice: controller.selectedGpu?.price,
+                name: finalName,
+                cpuName: widget.controller.selectedCpu?.name,
+                cpuPrice: widget.controller.selectedCpu?.price,
+                mainboardName: widget.controller.selectedMainboard?.name,
+                mainboardPrice: widget.controller.selectedMainboard?.price,
+                gpuName: widget.controller.selectedGpu?.name,
+                gpuPrice: widget.controller.selectedGpu?.price,
                 createdAt: DateTime.now(),
               );
-              userBuildsController.addBuild(build);
-              onSaved?.call();
+              widget.userBuildsController.addBuild(newBuild);
+              widget.controller.clearBuild();
+              widget.onSaved?.call();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('💾 Đã lưu build "${build.name}"!'),
+                  content: Text('💾 Đã lưu build "${newBuild.name}"!'),
                   backgroundColor: const Color(0xFF7C3AED),
                 ),
               );

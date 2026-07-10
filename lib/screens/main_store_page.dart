@@ -26,6 +26,7 @@ class _MainStorePageState extends State<MainStorePage> {
   late final PcBuilderController _pcBuilderController;
   late final UserBuildsController _userBuildsController;
   final GlobalKey<ChatBotWidgetState> _chatBotKey = GlobalKey<ChatBotWidgetState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -53,6 +54,7 @@ class _MainStorePageState extends State<MainStorePage> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: const Color(0xFF0D0D12),
         body: SafeArea(
           bottom: false,
@@ -317,7 +319,7 @@ class _MainStorePageState extends State<MainStorePage> {
   }
 
   void _showPcBuilderSheet() {
-    final tabController = DefaultTabController.maybeOf(context);
+    final tabController = DefaultTabController.maybeOf(_scaffoldKey.currentContext ?? context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

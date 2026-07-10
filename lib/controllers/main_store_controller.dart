@@ -57,11 +57,13 @@ class MainStoreController extends ChangeNotifier {
   String _brandOf(PcBuild build) => build.cpuModel.toLowerCase().contains('intel') ? 'Intel' : 'AMD';
 
   List<PcBuild> get filteredBuilds {
-    final globalKw = globalSearchController.text.toLowerCase();
+    final globalKw = globalSearchController.text.toLowerCase().trim();
+    final kwTokens = globalKw.isNotEmpty ? globalKw.split(RegExp(r'\s+')) : [];
+    
     var list = mockPcBuilds.where((b) {
       final buildString = '${b.buildId} ${b.cpuModel} ${b.motherboardModel} ${b.gpuModel}'.toLowerCase();
       
-      if (globalKw.isNotEmpty && !buildString.contains(globalKw)) {
+      if (kwTokens.isNotEmpty && !kwTokens.every((token) => buildString.contains(token))) {
         return false;
       }
       if (_selectedBrand != 'All' && _brandOf(b) != _selectedBrand) return false;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../models/user_build.dart';
 import '../../../controllers/user_builds_controller.dart';
 import '../../../controllers/pc_builder_controller.dart';
@@ -151,6 +152,34 @@ class UserBuildCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
+                Tooltip(
+                  message: 'Sao chép cấu hình',
+                  child: InkWell(
+                    onTap: () {
+                      final totalPriceStr = userBuild.totalPrice
+                          .round()
+                          .toString()
+                          .replaceAllMapped(
+                              RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+                              (m) => '${m[1]}.');
+                      final copyText =
+                          '${userBuild.name}\nVi xử lý: ${userBuild.cpuName ?? "Chưa có"}\nBo mạch chủ: ${userBuild.mainboardName ?? "Chưa có"}\nCard đồ họa: ${userBuild.gpuName ?? "Chưa có"}\nTổng cộng: $totalPriceStrđ';
+                      Clipboard.setData(ClipboardData(text: copyText));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Đã sao chép cấu hình'),
+                          duration: Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Color(0xFF1B9E5A),
+                        ),
+                      );
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      child: Icon(Icons.copy_rounded, color: Colors.black54, size: 18),
+                    ),
+                  ),
+                ),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

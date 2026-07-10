@@ -79,7 +79,8 @@ class CategoryController extends ChangeNotifier {
 
   List<PcComponent> getFiltered(List<PcComponent> components, String? searchQuery) {
     var list = components.toList();
-    final globalKw = searchQuery?.toLowerCase() ?? '';
+    final globalKw = searchQuery?.toLowerCase().trim() ?? '';
+    final kwTokens = globalKw.isNotEmpty ? globalKw.split(RegExp(r'\s+')) : [];
 
     list = list.where((c) {
       if (inStockOnly && !c.inStock) return false;
@@ -109,8 +110,10 @@ class CategoryController extends ChangeNotifier {
         if (!selectedVram.contains(vram)) return false;
       }
 
-      final cName = c.name.toLowerCase();
-      if (globalKw.isNotEmpty && !cName.contains(globalKw)) return false;
+      if (kwTokens.isNotEmpty) {
+        final searchTarget = '${c.name} ${c.manufacturer ?? ''}'.toLowerCase();
+        if (!kwTokens.every((token) => searchTarget.contains(token))) return false;
+      }
       return true;
     }).toList();
 

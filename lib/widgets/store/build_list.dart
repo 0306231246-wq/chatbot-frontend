@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/pc_build.dart';
 import '../../data/mock_data.dart';
 
@@ -22,7 +23,6 @@ class BuildList extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = builds ?? mockPcBuilds;
     final primary = Theme.of(context).colorScheme.primary;
-    final surface = Theme.of(context).colorScheme.surface;
 
     if (data.isEmpty) {
       return const SliverToBoxAdapter(
@@ -52,7 +52,7 @@ class BuildList extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: surface,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -76,6 +76,35 @@ class BuildList extends StatelessWidget {
                               fontSize: 14,
                               fontWeight: FontWeight.bold)),
                       const Spacer(),
+                      Tooltip(
+                        message: 'Sao chép cấu hình',
+                        child: InkWell(
+                          onTap: () {
+                            final totalPriceStr = build.totalPrice
+                                .toString()
+                                .replaceAllMapped(
+                                    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+                                    (m) => '${m[1]}.');
+                            final copyText =
+                                '${build.buildId}\nVi xử lý: ${build.cpuModel}\nBo mạch chủ: ${build.motherboardModel}\nCard đồ họa: ${build.gpuModel}\nLắp ráp & test: ${(build.assemblyFee / 1000).toStringAsFixed(0)}K đ\nTổng cộng: $totalPriceStrđ';
+                            Clipboard.setData(ClipboardData(text: copyText));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã sao chép cấu hình'),
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Color(0xFF1B9E5A),
+                              ),
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 4.0),
+                            child: Icon(Icons.copy_rounded,
+                                color: Colors.black54, size: 18),
+                          ),
+                        ),
+                      ),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),

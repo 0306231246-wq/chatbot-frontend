@@ -24,7 +24,6 @@ class PcBuilderSheet extends StatelessWidget {
     this.onSaved,
   });
 
-
   void _askAI(BuildContext context) {
     if (controller.selectedCount < 2) return;
 
@@ -37,8 +36,13 @@ class PcBuilderSheet extends StatelessWidget {
     if (mainboard != null) names.add(mainboard.name);
     if (gpu != null) names.add(gpu.name);
 
-    final parts = names.join(' + ');
-    final prompt = '$parts có tương thích với nhau không?';
+    String prompt;
+    if (controller.isPrebuiltSelection && controller.prebuiltId != null) {
+      prompt = '${controller.prebuiltId}:\n- ${names.join('\n- ')}';
+    } else {
+      final parts = names.join(' + ');
+      prompt = '$parts có tương thích với nhau không?';
+    }
 
     Navigator.pop(context); // Close sheet
     chatBotKey.currentState?.openWithDraftMessage(prompt);
@@ -160,39 +164,37 @@ class PcBuilderSheet extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (!controller.isPrebuiltSelection) ...[
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: hasEnoughItems
-                                  ? Theme.of(context).colorScheme.secondary
-                                  : Colors.grey.shade800,
-                              foregroundColor:
-                                  hasEnoughItems ? Colors.white : Colors.white38,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                            icon: const Icon(Icons.auto_awesome),
-                            label: const Text('Tư vấn với AI',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            onPressed:
-                                hasEnoughItems ? () => _askAI(context) : null,
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: hasEnoughItems
+                                ? Theme.of(context).colorScheme.secondary
+                                : Colors.grey.shade800,
+                            foregroundColor:
+                                hasEnoughItems ? Colors.white : Colors.white38,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                          icon: const Icon(Icons.auto_awesome),
+                          label: const Text('Tư vấn với AI',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          onPressed:
+                              hasEnoughItems ? () => _askAI(context) : null,
+                        ),
+                      ),
+                      if (!hasEnoughItems)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'Hãy chọn thêm ít nhất 1 linh kiện nữa để AI có thể kiểm tra.',
+                            style:
+                                TextStyle(color: Colors.white38, fontSize: 12),
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                        if (!hasEnoughItems)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'Hãy chọn thêm ít nhất 1 linh kiện nữa để AI có thể kiểm tra.',
-                              style:
-                                  TextStyle(color: Colors.white38, fontSize: 12),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                      ],
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,

@@ -1,6 +1,7 @@
+import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/pc_build.dart';
@@ -37,19 +38,31 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     _loadChatHistory();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _controller.dispose();
+    _inputFocusNode.dispose();
+    super.dispose();
+  }
+
   void _loadChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final historyString = prefs.getString(_getHistoryKey());
+    bool loadedFromCache = false;
+
     if (historyString != null) {
       try {
         final List<dynamic> decoded = jsonDecode(historyString);
-        final List<Map<String, dynamic>> loadedMessages = decoded.map((msg) {
-          return {
+        final List<Map<String, dynamic>> loadedMessages =
+            decoded.map((dynamic item) {
+          final msg = item as Map<String, dynamic>;
+          return <String, dynamic>{
             'text': msg['text'],
             'isUser': msg['isUser'],
-            'hasCard': msg['hasCard'],
+            'hasCard': msg['hasCard'] ?? false,
             'buildData': msg['buildData'] != null
-                ? PcBuild.fromJson(msg['buildData'])
+                ? PcBuild.fromJson(msg['buildData'] as Map<String, dynamic>)
                 : null,
           };
         }).toList();
@@ -59,21 +72,24 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
             _messages.addAll(loadedMessages);
           });
           _scrollToBottom();
-          return;
+          loadedFromCache = true;
         }
       } catch (e) {
-        print("Lỗi load lịch sử: $e");
+        print("Lỗi load lịch sử từ cache: $e");
       }
     }
 
-    // Nếu không có lịch sử thì thêm câu chào
-    _updateState(() {
-      _messages.add({
-        'text':
-            'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?',
-        'isUser': false
+    if (!loadedFromCache) {
+      // Nếu không có lịch sử thì thêm câu chào
+      _updateState(() {
+        _messages.add({
+          'text':
+              'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?',
+          'isUser': false
+        });
       });
-    });
+      _saveChatHistory();
+    }
   }
 
   String _getHistoryKey() {
@@ -101,7 +117,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     if (_isLoading) return;
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    
+
     _controller.clear();
     _processMessage(text);
   }
@@ -113,7 +129,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     });
     _saveChatHistory();
     _scrollToBottom();
-    
+
     final response = await ApiService.sendMessageToChatbot(text);
 
     String responseText = response['text'] ??
@@ -171,7 +187,16 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
   }
 
   void _handleRetry(int index) {
-    if (_isLoading) return;
+    if (_isLoading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hệ thống đang xử lý, vui lòng chờ...'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     if (index > 0 && index < _messages.length) {
       final userMsgIndex = index - 1;
@@ -249,7 +274,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                             isDesktop: false,
                             isModal: true,
                             onClose: () => Navigator.pop(context),
-                            onReset: _resetChat,
+                            onReset: _isLoading ? null : _resetChat,
                           ),
                           Expanded(
                             child: ChatMessageList(
@@ -275,14 +300,6 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     ).whenComplete(() {
       _modalSetState = null;
     });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    _inputFocusNode.dispose();
-    super.dispose();
   }
 
   @override
@@ -318,7 +335,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                     ChatHeader(
                       primary: primary,
                       isDesktop: true,
-                      onReset: _resetChat,
+                      onReset: _isLoading ? null : _resetChat,
                     ),
                     Expanded(
                       child: ChatMessageList(

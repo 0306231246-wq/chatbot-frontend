@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class ApiService {
   // Danh sách 3 Base URL hỗ trợ chuyển đổi nhanh:
   // 1. Local IP mạng LAN (dành cho điện thoại thật hoặc máy ảo tuỳ ý)
@@ -18,7 +17,8 @@ class ApiService {
       'https://container-frisk-plunder.ngrok-free.dev';
 
   // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
-  static String baseUrl = ngrokUrl; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
+  static String baseUrl =
+      ngrokUrl; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
 
   // Session ID mặc định cho phiên tư vấn
   static String currentSessionId = 'session_gaming_pc';
@@ -106,7 +106,23 @@ class ApiService {
     }
   }
 
-  /// Xóa sạch bộ nhớ đệm và lịch sử phiên hội thoại trên cả UI và Server
+  // (Removed getChatHistory as backend history sync is no longer used)
+  /// Lấy trạng thái sức khỏe của backend (ok / degraded)
+  static Future<String> getHealthStatus() async {
+    final url = Uri.parse('$baseUrl/health');
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        return decoded['status'] ?? 'error';
+      }
+      return 'error';
+    } catch (e) {
+      return 'error';
+    }
+  }
+
+  /// Làm mới (xóa) phiên hiện tại bằng cách đổi sessionId ngẫu nhiên (chỉ với guest)
   static Future<bool> deleteSession() async {
     final user = FirebaseAuth.instance.currentUser;
     final sessionId = user != null ? 'session_${user.uid}' : currentSessionId;

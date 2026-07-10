@@ -114,11 +114,38 @@ class _CategoryPageState extends State<CategoryPage> {
     final sw = MediaQuery.of(context).size.width;
     final isDesktop = sw > 900;
 
+    final listenables = <Listenable>[_controller];
+    if (widget.pcBuilderController != null) {
+      listenables.add(widget.pcBuilderController!);
+    }
+
     return ListenableBuilder(
-      listenable: _controller,
+      listenable: Listenable.merge(listenables),
       builder: (context, _) {
-        final filtered =
+        var filtered =
             _controller.getFiltered(widget.components, widget.searchQuery);
+
+        if (widget.pcBuilderController != null) {
+          if (widget.category == ComponentCategory.mainboard) {
+            final cpuSocket = widget.pcBuilderController!.selectedCpu?.socket;
+            if (cpuSocket != null && cpuSocket.isNotEmpty) {
+              filtered = filtered
+                  .where(
+                      (c) => c.socket?.toLowerCase() == cpuSocket.toLowerCase())
+                  .toList();
+            }
+          } else if (widget.category == ComponentCategory.cpu) {
+            final mbSocket =
+                widget.pcBuilderController!.selectedMainboard?.socket;
+            if (mbSocket != null && mbSocket.isNotEmpty) {
+              filtered = filtered
+                  .where(
+                      (c) => c.socket?.toLowerCase() == mbSocket.toLowerCase())
+                  .toList();
+            }
+          }
+        }
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

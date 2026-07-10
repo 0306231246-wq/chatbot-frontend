@@ -34,6 +34,21 @@ class GlobalSearchBar extends StatelessWidget {
               ),
             ),
           ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller.globalSearchController,
+            builder: (context, value, child) {
+              if (value.text.isEmpty) return const SizedBox.shrink();
+              return GestureDetector(
+                onTap: () {
+                  controller.globalSearchController.clear();
+                },
+                child: const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Icon(Icons.close, color: Colors.white54, size: 16),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

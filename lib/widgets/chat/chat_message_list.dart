@@ -48,7 +48,44 @@ class ChatMessageList extends StatelessWidget {
                   bottomRight: Radius.circular(isUser ? 3 : 14),
                 ),
               ),
-              child: Text(msg['text'], style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 13, height: 1.3)),
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  textSelectionTheme: TextSelectionThemeData(
+                    selectionColor: isUser ? Colors.white.withOpacity(0.3) : primary.withOpacity(0.3),
+                    selectionHandleColor: isUser ? Colors.white : primary,
+                  ),
+                ),
+                child: SelectionArea(
+                  contextMenuBuilder: (context, selectableRegionState) {
+                    final List<ContextMenuButtonItem> buttonItems =
+                        selectableRegionState.contextMenuButtonItems.map((item) {
+                      String? newLabel = item.label;
+                      if (item.type == ContextMenuButtonType.selectAll) {
+                        newLabel = 'Chọn tất cả';
+                      } else if (item.type == ContextMenuButtonType.copy) {
+                        newLabel = 'Sao chép';
+                      }
+                      return ContextMenuButtonItem(
+                        onPressed: item.onPressed,
+                        type: item.type,
+                        label: newLabel,
+                      );
+                    }).toList();
+
+                    return Theme(
+                      data: ThemeData.light(),
+                      child: AdaptiveTextSelectionToolbar.buttonItems(
+                        anchors: selectableRegionState.contextMenuAnchors,
+                        buttonItems: buttonItems,
+                      ),
+                    );
+                  },
+                  child: Text(
+                    msg['text'], 
+                    style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 13, height: 1.3),
+                  ),
+                ),
+              ),
             ),
             Padding(
               padding: EdgeInsets.only(
@@ -61,6 +98,7 @@ class ChatMessageList extends StatelessWidget {
                 children: [
                   _MessageActionButton(
                     icon: Icons.copy_rounded,
+                    tooltip: 'Sao chép',
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: msg['text']));
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +115,8 @@ class ChatMessageList extends StatelessWidget {
                   if (!isUser)
                     _MessageActionButton(
                       icon: Icons.refresh_rounded,
+                      tooltip: 'Thử lại',
+                      disabled: index != messages.length - 1,
                       onTap: () {
                         if (onRetry != null) {
                           onRetry!(index);
@@ -125,7 +165,35 @@ class _BuildCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(pcBuild.buildId, style: TextStyle(color: primary, fontSize: 11, fontWeight: FontWeight.bold)),
-              Icon(Icons.computer, color: primary, size: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Tooltip(
+                    message: 'Sao chép cấu hình',
+                    child: InkWell(
+                      onTap: () {
+                        final totalPriceStr = pcBuild.totalPrice.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+                        final copyText = '${pcBuild.buildId}\nVi xử lý: ${pcBuild.cpuModel}\nBo mạch chủ: ${pcBuild.motherboardModel}\nCard đồ họa: ${pcBuild.gpuModel}\nLắp ráp & test: ${(pcBuild.assemblyFee / 1000).toStringAsFixed(0)}K đ\nTổng cộng: $totalPriceStrđ';
+                        Clipboard.setData(ClipboardData(text: copyText));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Đã sao chép cấu hình'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.grey.shade800,
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Icon(Icons.copy_rounded, color: primary, size: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.computer, color: primary, size: 16),
+                ],
+              ),
             ],
           ),
           Divider(color: Colors.grey.shade200, height: 12),
@@ -195,25 +263,33 @@ class _DetailRow extends StatelessWidget {
 class _MessageActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
+  final bool disabled;
+  final String? tooltip;
 
-  const _MessageActionButton({required this.icon, required this.onTap});
+  const _MessageActionButton({required this.icon, required this.onTap, this.disabled = false, this.tooltip});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.all(6.0),
-          child: Icon(
-            icon,
-            size: 16,
-            color: Colors.grey.shade500,
-          ),
+    Widget button = InkWell(
+      onTap: disabled ? null : onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Icon(
+          icon,
+          size: 16,
+          color: disabled ? Colors.grey.shade300 : Colors.grey.shade500,
         ),
       ),
+    );
+
+    if (tooltip != null) {
+      button = Tooltip(message: tooltip!, child: button);
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: button,
     );
   }
 }
