@@ -124,8 +124,8 @@ class PcBuilderController extends ChangeNotifier {
         if (decoded['gpu'] != null) _selectedGpu = PcComponent.fromJson(decoded['gpu']);
         _isPrebuiltSelection = decoded['isPrebuiltSelection'] == true;
         notifyListeners();
-      } catch (e) {
-        print("Lỗi load builder state: $e");
+      } catch (_) {
+        debugPrint('Không thể tải trạng thái build đã lưu.');
       }
     }
   }

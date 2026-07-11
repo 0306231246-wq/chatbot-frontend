@@ -1,11 +1,17 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../../controllers/main_store_controller.dart';
 import '../../../services/auth_service.dart';
 
-void showProfileSheet(BuildContext context, User user, MainStoreController controller) {
+void showProfileSheet(
+  BuildContext context,
+  User user,
+  MainStoreController controller,
+) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -29,8 +35,8 @@ class ProfileSheet extends StatefulWidget {
 }
 
 class _ProfileSheetState extends State<ProfileSheet> {
-  late TextEditingController nameController;
-  late TextEditingController avatarController;
+  late final TextEditingController nameController;
+  late final TextEditingController avatarController;
   bool isSaving = false;
 
   @override
@@ -38,14 +44,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
     super.initState();
     nameController = TextEditingController(text: widget.user.displayName ?? '');
     avatarController = TextEditingController(text: widget.user.photoURL ?? '');
-    
+
     if (widget.user.photoURL == 'firestore_base64') {
       AuthService.getProfileAvatar(widget.user.uid).then((base64) {
-        if (base64 != null && mounted) {
-          setState(() {
-            avatarController.text = base64;
-          });
-        }
+        if (!mounted || base64 == null) return;
+        setState(() => avatarController.text = base64);
       });
     }
   }
@@ -59,12 +62,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
   Widget _buildProfilePreview(String photoUrl) {
     final cleanPhotoUrl = photoUrl.trim();
-    
     ImageProvider? imageProvider;
+
     if (cleanPhotoUrl.startsWith('data:image')) {
       try {
-        final base64Str = cleanPhotoUrl.split(',').last;
-        imageProvider = MemoryImage(base64Decode(base64Str));
+        imageProvider = MemoryImage(base64Decode(cleanPhotoUrl.split(',').last));
       } catch (_) {}
     } else {
       final uri = Uri.tryParse(cleanPhotoUrl);
@@ -84,19 +86,18 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
+    final image = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       maxWidth: 300,
       imageQuality: 50,
     );
-    if (image != null) {
-      final bytes = await image.readAsBytes();
-      final base64String = base64Encode(bytes);
-      setState(() {
-        avatarController.text = 'data:image/jpeg;base64,$base64String';
-      });
-    }
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    final base64String = base64Encode(bytes);
+    setState(() {
+      avatarController.text = 'data:image/jpeg;base64,$base64String';
+    });
   }
 
   Future<void> _saveProfile() async {
@@ -114,9 +115,8 @@ class _ProfileSheetState extends State<ProfileSheet> {
         content: Text(result.success
             ? 'Đã cập nhật hồ sơ.'
             : result.errorMessage ?? 'Cập nhật hồ sơ thất bại.'),
-        backgroundColor: result.success
-            ? const Color(0xFF1B9E5A)
-            : Colors.red.shade800,
+        backgroundColor:
+            result.success ? const Color(0xFF1B9E5A) : Colors.red.shade800,
       ),
     );
   }
@@ -140,7 +140,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
             children: [
               const Text(
                 'Hồ sơ',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               Center(
@@ -157,9 +161,16 @@ class _ProfileSheetState extends State<ProfileSheet> {
                           decoration: BoxDecoration(
                             color: const Color(0xFF2F80FF),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF14141B), width: 2),
+                            border: Border.all(
+                              color: const Color(0xFF14141B),
+                              width: 2,
+                            ),
                           ),
-                          child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -181,7 +192,6 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

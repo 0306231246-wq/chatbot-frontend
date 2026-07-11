@@ -75,7 +75,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
           loadedFromCache = true;
         }
       } catch (e) {
-        print("Lỗi load lịch sử từ cache: $e");
+        debugPrint('Lỗi load lịch sử chat từ cache.');
       }
     }
 
@@ -84,7 +84,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
       _updateState(() {
         _messages.add({
           'text':
-              'Xin chào! Tôi có thể giúp gì cho bạn trong việc chọn cấu hình PC hôm nay?',
+              'Xin chào! Tôi có thể giúp gì cho bạn khi chọn cấu hình PC hôm nay?',
           'isUser': false
         });
       });
@@ -230,7 +230,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
       _messages.clear();
       _messages.add({
         'text':
-            'Đã làm mới phiên tư vấn! Xin chào, tôi có thể giúp gì cho bạn hôm nay?',
+            'Đã làm mới phiên tư vấn! Tôi có thể giúp gì cho bạn hôm nay?',
         'isUser': false
       });
     });

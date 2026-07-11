@@ -1,29 +1,20 @@
-import 'dart:convert';
 import 'dart:async';
-import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Danh sách 3 Base URL hỗ trợ chuyển đổi nhanh:
-  // 1. Local IP mạng LAN (dành cho điện thoại thật hoặc máy ảo tuỳ ý)
   static const String localIpUrl = 'http://127.0.0.1:8000';
-  // 2. Android Emulator mặc định
   static const String emulatorUrl = 'http://10.0.2.2:8000';
-  // 3. Ngrok Public URL (Dành cho truy cập qua Internet)
   static const String ngrokUrl =
       'https://customer-outskirts-blubber.ngrok-free.dev';
-
   static const String ngrokUrl1 =
       'https://container-frisk-plunder.ngrok-free.dev';
 
-  // Biến cấu hình baseUrl hiện tại (đổi sang localIpUrl, emulatorUrl hoặc ngrokUrl tuỳ môi trường)
-  static String baseUrl =
-      ngrokUrl; // Mặc định là localIpUrl, có thể đổi sang emulatorUrl hoặc ngrokUrl khi cần
-
-  // Session ID mặc định cho phiên tư vấn
+  static String baseUrl = ngrokUrl;
   static String currentSessionId = 'session_gaming_pc';
 
-  /// Gửi câu hỏi của người dùng tới Backend FastAPI Chatbot và nhận phản hồi
   static Future<Map<String, dynamic>> sendMessageToChatbot(
       String message) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -32,7 +23,6 @@ class ApiService {
 
     try {
       final idToken = await user?.getIdToken();
-
       final response = await http
           .post(
             url,
@@ -47,67 +37,55 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 60));
 
-      // 201 Created: Thành công theo đúng đặc tả API mới
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final Map<String, dynamic> responseData =
-            jsonDecode(utf8.decode(response.bodyBytes));
-        final String replyText = responseData['chatbot_reply'] ??
-            responseData['text'] ??
-            'Đã nhận yêu cầu tư vấn.';
-
+        final data = jsonDecode(utf8.decode(response.bodyBytes))
+            as Map<String, dynamic>;
         return {
-          'text': replyText,
-          'has_card': responseData['has_card'] ?? false,
-          'build_data': responseData['build_data'],
+          'text': data['chatbot_reply'] ??
+              data['text'] ??
+              'Đã nhận yêu cầu tư vấn.',
+          'has_card': data['has_card'] ?? false,
+          'build_data': data['build_data'],
           'success': true,
         };
-      } else if (response.statusCode == 400) {
-        return {
-          'text':
-              'Lỗi xác thực dữ liệu (400). Vui lòng kiểm tra lại nội dung câu hỏi!',
-          'has_card': false,
-          'success': false,
-        };
-      } else if (response.statusCode == 500) {
-        return {
-          'text': 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau!',
-          'has_card': false,
-          'success': false,
-        };
-      } else if (response.statusCode == 504) {
-        return {
-          'text': 'Hệ thống cần thêm thời gian để xử lý. Vui lòng thử lại sau!',
-          'has_card': false,
-          'success': false,
-        };
-      } else {
-        return {
-          'text': 'Hệ thống đang bận. Vui lòng thử lại sau giây lát!',
-          'has_card': false,
-          'success': false,
-        };
       }
-    } on TimeoutException catch (_) {
+
       return {
-        'text':
-            'Mạng không ổn định hoặc hệ thống đang quá tải. Vui lòng thử lại!',
+        'text': _messageForStatus(response.statusCode),
         'has_card': false,
         'success': false,
       };
-    } catch (e) {
-      // ignore: avoid_print
-      print('API Error: $e');
-      return {
-        'text':
-            'Không thể kết nối đến hệ thống. Vui lòng kiểm tra lại đường truyền mạng!',
-        'has_card': false,
-        'success': false,
-      };
+    } on TimeoutException {
+      return _error('Hệ thống phản hồi chậm. Vui lòng thử lại sau.');
+    } catch (_) {
+      return _error('Không thể kết nối hệ thống. Vui lòng kiểm tra mạng.');
     }
   }
 
-  // (Removed getChatHistory as backend history sync is no longer used)
-  /// Lấy trạng thái sức khỏe của backend (ok / degraded)
+  static Map<String, dynamic> _error(String text) {
+    return {
+      'text': text,
+      'has_card': false,
+      'success': false,
+    };
+  }
+
+  static String _messageForStatus(int statusCode) {
+    switch (statusCode) {
+      case 400:
+        return 'Nội dung gửi chưa hợp lệ. Vui lòng kiểm tra lại.';
+      case 401:
+      case 403:
+        return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      case 500:
+        return 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.';
+      case 504:
+        return 'Hệ thống cần thêm thời gian xử lý. Vui lòng thử lại sau.';
+      default:
+        return 'Hệ thống đang bận. Vui lòng thử lại sau.';
+    }
+  }
+
   static Future<String> getHealthStatus() async {
     final url = Uri.parse('$baseUrl/health');
     try {
@@ -117,27 +95,28 @@ class ApiService {
         return decoded['status'] ?? 'error';
       }
       return 'error';
-    } catch (e) {
+    } catch (_) {
       return 'error';
     }
   }
 
-  /// Làm mới (xóa) phiên hiện tại bằng cách đổi sessionId ngẫu nhiên (chỉ với guest)
   static Future<bool> deleteSession() async {
     final user = FirebaseAuth.instance.currentUser;
     final sessionId = user != null ? 'session_${user.uid}' : currentSessionId;
     final url = Uri.parse('$baseUrl/sessions/$sessionId');
     try {
       final idToken = await user?.getIdToken();
-      final response = await http.delete(
-        url,
-        headers: {
-          if (idToken != null) 'Authorization': 'Bearer $idToken',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .delete(
+            url,
+            headers: {
+              if (idToken != null) 'Authorization': 'Bearer $idToken',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       return response.statusCode == 200 || response.statusCode == 204;
-    } catch (e) {
-      return false; // Trả về false nếu backend chưa bật hoặc lỗi kết nối
+    } catch (_) {
+      return false;
     }
   }
 }

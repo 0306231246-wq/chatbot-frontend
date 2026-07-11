@@ -1,8 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import 'auth_session_service.dart';
 
 class AuthResult {
@@ -32,11 +33,13 @@ class AuthService {
   Future<AuthResult> signInWithEmail(String email, String password) async {
     try {
       final cred = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);
+        email: email,
+        password: password,
+      );
       return AuthResult.success(cred.user);
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
-    } catch (e) {
+    } catch (_) {
       return AuthResult.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
     }
   }
@@ -44,13 +47,14 @@ class AuthService {
   Future<AuthResult> signUpWithEmail(String email, String password) async {
     try {
       final cred = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
-      // Gửi email xác thực đóng vai trò như một Welcome Email
+        email: email,
+        password: password,
+      );
       await cred.user?.sendEmailVerification();
       return AuthResult.success(cred.user);
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
-    } catch (e) {
+    } catch (_) {
       return AuthResult.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
     }
   }
@@ -58,28 +62,26 @@ class AuthService {
   Future<AuthResult> signInWithGoogle() async {
     try {
       if (kIsWeb) {
-        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        final cred = await _auth.signInWithPopup(googleProvider);
+        final cred = await _auth.signInWithPopup(GoogleAuthProvider());
         return AuthResult.success(cred.user);
-      } else {
-        final GoogleSignInAccount? account = await _googleSignIn.signIn();
-        if (account != null) {
-          final GoogleSignInAuthentication auth = await account.authentication;
-          final AuthCredential credential = GoogleAuthProvider.credential(
-            accessToken: auth.accessToken,
-            idToken: auth.idToken,
-          );
-          final cred = await _auth.signInWithCredential(credential);
-          return AuthResult.success(cred.user);
-        }
+      }
+
+      final account = await _googleSignIn.signIn();
+      if (account == null) {
         return AuthResult.error('Đăng nhập bị hủy.');
       }
+
+      final auth = await account.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: auth.accessToken,
+        idToken: auth.idToken,
+      );
+      final cred = await _auth.signInWithCredential(credential);
+      return AuthResult.success(cred.user);
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
-    } catch (e) {
-      return AuthResult.error(
-          //'Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.');
-          'Đăng nhập thất bại. Lỗi: $e');
+    } catch (_) {
+      return AuthResult.error('Đăng nhập thất bại. Vui lòng thử lại.');
     }
   }
 
@@ -105,14 +107,14 @@ class AuthService {
       return AuthResult.success(null);
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
-    } catch (e) {
+    } catch (_) {
       return AuthResult.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
     }
   }
 
   Future<AuthResult> updateProfile({
     required String displayName,
-    String? photoUrl, // This will now receive the base64 string
+    String? photoUrl,
   }) async {
     try {
       final user = _auth.currentUser;
@@ -122,79 +124,70 @@ class AuthService {
 
       await user.updateDisplayName(displayName.trim());
 
-      if (photoUrl != null && photoUrl.trim().isNotEmpty) {
-        final cleanPhotoUrl = photoUrl.trim();
-        // Save base64 to Firestore instead of FirebaseAuth photoURL
+      final cleanPhotoUrl = photoUrl?.trim();
+      if (cleanPhotoUrl != null && cleanPhotoUrl.isNotEmpty) {
         if (cleanPhotoUrl.startsWith('data:image')) {
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .set({
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
             'photoBase64': cleanPhotoUrl,
           }, SetOptions(merge: true));
           clearAvatarCache(user.uid);
-          // Set a dummy URL so FirebaseAuth knows user has an avatar
           await user.updatePhotoURL('firestore_base64');
         } else {
           await user.updatePhotoURL(cleanPhotoUrl);
         }
-      } else if (photoUrl != null && photoUrl.trim().isEmpty) {
+      } else if (photoUrl != null) {
         await user.updatePhotoURL(null);
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'photoBase64': FieldValue.delete(),
-        });
+        }, SetOptions(merge: true));
         clearAvatarCache(user.uid);
       }
+
       await user.reload();
       return AuthResult.success(_auth.currentUser);
     } on FirebaseAuthException catch (e) {
       return AuthResult.error(_getErrorMessage(e));
-    } catch (e) {
-      return AuthResult.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
+    } catch (_) {
+      return AuthResult.error('Cập nhật hồ sơ thất bại. Vui lòng thử lại.');
     }
   }
 
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-        return 'Không tìm thấy tài khoản với Email này.';
+        return 'Không tìm thấy tài khoản với email này.';
       case 'wrong-password':
         return 'Mật khẩu không chính xác.';
       case 'email-already-in-use':
         return 'Email này đã được đăng ký.';
       case 'weak-password':
-        return 'Mật khẩu quá yếu (cần ít nhất 6 ký tự).';
+        return 'Mật khẩu quá yếu. Cần ít nhất 6 ký tự.';
       case 'invalid-email':
-        return 'Định dạng Email không hợp lệ.';
+        return 'Định dạng email không hợp lệ.';
       case 'invalid-credential':
         return 'Email hoặc mật khẩu không chính xác.';
+      case 'too-many-requests':
+        return 'Bạn thử quá nhiều lần. Vui lòng đợi một lát rồi thử lại.';
+      case 'network-request-failed':
+        return 'Không có kết nối mạng. Vui lòng kiểm tra lại.';
       default:
-        return 'Lỗi xác thực: ${e.message}';
+        return 'Lỗi xác thực. Vui lòng thử lại.';
     }
   }
 
-  // --- Avatar Caching for Firestore ---
   static final Map<String, String> _avatarCache = {};
 
   static Future<String?> getProfileAvatar(String uid) async {
-    if (_avatarCache.containsKey(uid)) {
-      return _avatarCache[uid];
-    }
+    if (_avatarCache.containsKey(uid)) return _avatarCache[uid];
     try {
       final doc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (doc.exists) {
-        final base64 = doc.data()?['photoBase64'] as String?;
-        if (base64 != null) {
-          _avatarCache[uid] = base64;
-          return base64;
-        }
-      }
-    } catch (_) {}
-    return null;
+      final base64 = doc.data()?['photoBase64'] as String?;
+      if (base64 != null) _avatarCache[uid] = base64;
+      return base64;
+    } catch (_) {
+      return null;
+    }
   }
 
   static void clearAvatarCache(String uid) {

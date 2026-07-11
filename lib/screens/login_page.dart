@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ Email và Mật khẩu!')),
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ email và mật khẩu!')),
       );
       return;
     }
@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Tài khoản chưa xác thực! Đã gửi lại link xác thực mới vào Email của bạn.'),
+                content: const Text('Tài khoản chưa xác thực! Đã gửi lại link xác thực mới vào email của bạn.'),
                 backgroundColor: Colors.orange.shade800,
                 duration: const Duration(seconds: 4),
               ),
@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Vui lòng kiểm tra Hộp thư Email để xác thực tài khoản trước khi đăng nhập!'),
+                content: const Text('Vui lòng kiểm tra hộp thư email để xác thực tài khoản trước khi đăng nhập!'),
                 backgroundColor: Colors.orange.shade800,
               ),
             );
@@ -165,7 +165,7 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập Email để khôi phục mật khẩu!')),
+        const SnackBar(content: Text('Vui lòng nhập email để khôi phục mật khẩu!')),
       );
       return;
     }
@@ -264,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 32),
                   _buildTextField(
                     controller: _emailController,
-                    hintText: 'Email hoặc Tên đăng nhập',
+                    hintText: 'Email hoặc tên đăng nhập',
                     icon: Icons.person_outline_rounded,
                   ),
                   const SizedBox(height: 16),
