@@ -180,6 +180,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
           screenWidth > 600 && MediaQuery.of(context).size.height > 600;
       if (isDesktop) {
         setState(() => _isOpen = true);
+        _scrollToBottom(jump: true);
       } else {
         _showMobileChatBottomSheet(Theme.of(context).colorScheme.primary);
       }
@@ -216,6 +217,48 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     }
   }
 
+  Future<void> _confirmResetChat() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text('Xóa lịch sử chat?', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: const Text(
+          'Bạn có chắc muốn xóa toàn bộ lịch sử chat không?\nHành động này không thể hoàn tác.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _resetChat();
+    }
+  }
+
   void _resetChat() async {
     _updateState(() {
       _isLoading = true;
@@ -236,17 +279,30 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     });
   }
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-      }
+  void _scrollToBottom({bool jump = false}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_scrollController.hasClients) return;
+      _moveScrollToLatest(jump: jump);
     });
   }
 
+  void _moveScrollToLatest({required bool jump}) {
+    final target = _scrollController.position.minScrollExtent;
+    if (jump) {
+      _scrollController.jumpTo(target);
+      return;
+    }
+
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
   void _showMobileChatBottomSheet(Color primary) {
-    showModalBottomSheet(
+    final sheet = showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -274,7 +330,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                             isDesktop: false,
                             isModal: true,
                             onClose: () => Navigator.pop(context),
-                            onReset: _isLoading ? null : _resetChat,
+                            onReset: _isLoading ? null : _confirmResetChat,
                           ),
                           Expanded(
                             child: ChatMessageList(
@@ -282,6 +338,8 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                               isLoading: _isLoading,
                               primary: primary,
                               scrollController: _scrollController,
+                              onJumpToLatest: () =>
+                                  _scrollToBottom(jump: true),
                               onApplyBuild: widget.onApplyBuild,
                               onRetry: _handleRetry,
                             ),
@@ -297,7 +355,9 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
           ),
         );
       },
-    ).whenComplete(() {
+    );
+    _scrollToBottom(jump: true);
+    sheet.whenComplete(() {
       _modalSetState = null;
     });
   }
@@ -335,7 +395,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                     ChatHeader(
                       primary: primary,
                       isDesktop: true,
-                      onReset: _isLoading ? null : _resetChat,
+                      onReset: _isLoading ? null : _confirmResetChat,
                     ),
                     Expanded(
                       child: ChatMessageList(
@@ -343,6 +403,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                         isLoading: _isLoading,
                         primary: primary,
                         scrollController: _scrollController,
+                        onJumpToLatest: () => _scrollToBottom(jump: true),
                         onApplyBuild: widget.onApplyBuild,
                         onRetry: _handleRetry,
                       ),
@@ -379,6 +440,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
                   onTap: () {
                     if (isDesktop) {
                       setState(() => _isOpen = !_isOpen);
+                      if (_isOpen) _scrollToBottom(jump: true);
                     } else {
                       _showMobileChatBottomSheet(primary);
                     }
