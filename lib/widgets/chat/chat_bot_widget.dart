@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/pc_build.dart';
 import '../../services/api_service.dart';
@@ -47,8 +47,8 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
   }
 
   void _loadChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final historyString = prefs.getString(_getHistoryKey());
+    const storage = FlutterSecureStorage();
+    final historyString = await storage.read(key: _getHistoryKey());
     bool loadedFromCache = false;
 
     if (historyString != null) {
@@ -101,7 +101,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
   }
 
   void _saveChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
+    const storage = FlutterSecureStorage();
     final List<Map<String, dynamic>> toSave = _messages.map((msg) {
       return {
         'text': msg['text'],
@@ -110,7 +110,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
         'buildData': (msg['buildData'] as PcBuild?)?.toJson(),
       };
     }).toList();
-    await prefs.setString(_getHistoryKey(), jsonEncode(toSave));
+    await storage.write(key: _getHistoryKey(), value: jsonEncode(toSave));
   }
 
   void _sendMessage() {
@@ -265,15 +265,14 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     });
     await ApiService.deleteSession();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_getHistoryKey());
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: _getHistoryKey());
 
     _updateState(() {
       _isLoading = false;
       _messages.clear();
       _messages.add({
-        'text':
-            'Đã làm mới phiên tư vấn! Tôi có thể giúp gì cho bạn hôm nay?',
+        'text': 'Đã làm mới phiên tư vấn! Tôi có thể giúp gì cho bạn hôm nay?',
         'isUser': false
       });
     });

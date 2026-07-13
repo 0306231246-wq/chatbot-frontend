@@ -60,8 +60,22 @@ android {
             if (keystorePropertiesFile.exists()) {
                 keyAlias = keystoreProperties['keyAlias']
                 keyPassword = keystoreProperties['keyPassword']
-                storeFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-                storePassword = keystoreProperties['storePassword']
+                def storeFilePath = keystoreProperties['storeFile']
+                if (storeFilePath != null) {
+                    def sf = file(storeFilePath)
+                    if (sf.exists()) {
+                        storeFile = sf
+                        storePassword = keystoreProperties['storePassword']
+                    } else {
+                        println "WARNING: Keystore file $storeFilePath not found, falling back to debug keystore"
+                        initWith debug
+                    }
+                } else {
+                    initWith debug
+                }
+            } else {
+                println "WARNING: key.properties not found, falling back to debug keystore"
+                initWith debug
             }
         }
     }

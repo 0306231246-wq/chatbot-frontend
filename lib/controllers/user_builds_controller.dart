@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_build.dart';
 
@@ -16,11 +16,11 @@ class UserBuildsController extends ChangeNotifier {
     return user != null ? 'user_builds_${user.uid}' : 'user_builds_guest';
   }
 
-  // ─── Load từ SharedPreferences ──────────────────────────────────────────
+  // ─── Load từ flutter_secure_storage ──────────────────────────────────────────
   Future<void> load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_storageKey());
+      const storage = FlutterSecureStorage();
+      final raw = await storage.read(key: _storageKey());
       if (raw != null) {
         final loaded = UserBuild.decodeList(raw);
         _builds
@@ -33,11 +33,11 @@ class UserBuildsController extends ChangeNotifier {
     }
   }
 
-  // ─── Lưu vào SharedPreferences ──────────────────────────────────────────
+  // ─── Lưu vào flutter_secure_storage ──────────────────────────────────────────
   Future<void> _save() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_storageKey(), UserBuild.encodeList(_builds));
+      const storage = FlutterSecureStorage();
+      await storage.write(key: _storageKey(), value: UserBuild.encodeList(_builds));
     } catch (e) {
       debugPrint('UserBuildsController._save error: $e');
     }

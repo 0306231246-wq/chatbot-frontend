@@ -1,20 +1,51 @@
-# pc_builder_chatbot
+# AI PC Builder Frontend
 
-A new Flutter project.
+Ứng dụng Flutter cho hệ thống tư vấn linh kiện và cấu hình PC. Ứng dụng hỗ trợ đăng nhập Firebase, trò chuyện với Chatbot API, xem linh kiện và lưu cấu hình người dùng.
 
-## Getting Started
+## Yêu cầu
 
-This project is a starting point for a Flutter application.
+- Flutter SDK tương thích Dart `>=3.1.3 <4.0.0`
+- Chatbot API đang hoạt động
+- Firebase Authentication và Firestore đã được cấu hình
 
-A few resources to get you started if this is your first Flutter project:
+## Cấu hình Firebase
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Tạo `.env` trong thư mục này:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```env
+FIREBASE_API_KEY=
+FIREBASE_APP_ID=
+FIREBASE_ANDROID_API_KEY=
+FIREBASE_ANDROID_APP_ID=
+FIREBASE_MESSAGING_SENDER_ID=
+FIREBASE_PROJECT_ID=
+FIREBASE_AUTH_DOMAIN=
+FIREBASE_STORAGE_BUCKET=
+FIREBASE_MEASUREMENT_ID=
+GOOGLE_WEB_CLIENT_ID=
+```
 
-Flutter run
+Không đặt khóa quản trị Firebase, mật khẩu cơ sở dữ liệu hoặc khóa API phía server trong frontend.
 
+## Backend
+
+Địa chỉ API được chọn qua `ApiService.baseUrl` trong `lib/services/api_service.dart`:
+
+- `http://127.0.0.1:8000`: chạy cùng máy
+- `http://10.0.2.2:8000`: Android Emulator
+- URL HTTPS công khai: thiết bị thật
+
+## Chạy
+
+```powershell
+flutter pub get
+flutter run
+```
+
+Chạy trên web:
+
+```powershell
 flutter run -d web-server --web-port 8080
+```
+
+Backend phải cho phép origin của frontend trong cấu hình CORS.

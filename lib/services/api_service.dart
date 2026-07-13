@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -12,7 +13,15 @@ class ApiService {
   static const String ngrokUrl1 =
       'https://container-frisk-plunder.ngrok-free.dev';
 
-  static String baseUrl = ngrokUrl;
+  static String get baseUrl {
+    // WARNING (Security): Cleartext HTTP (like 127.0.0.1) is blocked on Android 9+ release builds.
+    // Ensure you only use HTTPS in production.
+    if (kReleaseMode) {
+      return ngrokUrl; // Enforce HTTPS for production
+    }
+    return ngrokUrl; // Can be changed to emulatorUrl or localIpUrl for debug
+  }
+
   static String currentSessionId = 'session_gaming_pc';
   static Future<void> _requestQueue = Future.value();
   static Future<String>? _healthCheckInFlight;
