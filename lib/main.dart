@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pc_builder_chatbot/screens/login_page.dart';
 import 'screens/main_store_page.dart';
 import 'config/firebase_options.dart';
+import 'services/auth_service.dart';
 import 'services/auth_session_service.dart';
 
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
@@ -57,14 +58,96 @@ class MyApp extends StatelessWidget {
             );
           }
           if (snapshot.hasData && snapshot.data != null) {
-            return SessionGuard(
-              user: snapshot.data!,
-              child: const MainStorePage(),
-            );
+            return EmailVerificationGate(user: snapshot.data!);
           }
           return const LoginPage();
         },
       ),
+    );
+  }
+}
+
+class EmailVerificationGate extends StatefulWidget {
+  final User user;
+
+  const EmailVerificationGate({
+    super.key,
+    required this.user,
+  });
+
+  @override
+  State<EmailVerificationGate> createState() => _EmailVerificationGateState();
+}
+
+class _EmailVerificationGateState extends State<EmailVerificationGate> {
+  bool _checking = true;
+  User? _verifiedUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEmailVerification();
+  }
+
+  @override
+  void didUpdateWidget(covariant EmailVerificationGate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.uid != widget.user.uid) {
+      _checkEmailVerification();
+    }
+  }
+
+  Future<void> _checkEmailVerification() async {
+    setState(() => _checking = true);
+    User? freshUser;
+    try {
+      await widget.user.reload();
+      freshUser = FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      freshUser = widget.user;
+    }
+
+    if (freshUser != null && !freshUser.emailVerified) {
+      await AuthService().signOut();
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Vui lòng xác thực email trước khi đăng nhập.',
+          ),
+          backgroundColor: Colors.orange.shade800,
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          _verifiedUser = null;
+          _checking = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _verifiedUser = freshUser;
+        _checking = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final user = _verifiedUser;
+    if (user == null) return const LoginPage();
+
+    return SessionGuard(
+      user: user,
+      child: const MainStorePage(),
     );
   }
 }

@@ -107,7 +107,7 @@ class _BuildCardHeader extends StatelessWidget {
   }
 
   String _buildCopyText() {
-    final totalPriceStr = _formatPrice(pcBuild.totalPrice as double);
+    final totalPriceStr = _formatPrice(pcBuild.totalPrice);
     final assemblyFee = (pcBuild.assemblyFee / 1000).toStringAsFixed(0);
     return '${pcBuild.buildId}\n'
         'Vi xử lý: ${pcBuild.cpuModel}\n'
@@ -137,7 +137,7 @@ class _BuildCardTotal extends StatelessWidget {
           ),
         ),
         Text(
-          '${_formatPrice(pcBuild.totalPrice as double)}đ',
+          '${_formatPrice(pcBuild.totalPrice)}đ',
           style: const TextStyle(
             color: Color(0xFF1B9E5A),
             fontWeight: FontWeight.bold,

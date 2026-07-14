@@ -1,6 +1,6 @@
 part of 'chat_message_list.dart';
 
-String _formatPrice(double value) {
+String _formatPrice(num value) {
   return value
       .round()
       .toString()

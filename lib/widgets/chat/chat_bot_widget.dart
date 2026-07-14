@@ -18,6 +18,9 @@ class ChatBotWidget extends StatefulWidget {
 }
 
 class ChatBotWidgetState extends State<ChatBotWidget> {
+  static const _historyIndexKey = 'chat_history_user_keys';
+  static const _maxStoredUserHistories = 5;
+
   bool _isOpen = false;
   bool _isLoading = false;
   StateSetter? _modalSetState;
@@ -49,6 +52,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
   void _loadChatHistory() async {
     const storage = FlutterSecureStorage();
     final historyString = await storage.read(key: _getHistoryKey());
+    if (!mounted) return;
     bool loadedFromCache = false;
 
     if (historyString != null) {
@@ -67,6 +71,7 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
           };
         }).toList();
 
+        if (!mounted) return;
         if (loadedMessages.isNotEmpty) {
           _updateState(() {
             _messages.addAll(loadedMessages);
@@ -100,8 +105,14 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     return 'chat_history_guest';
   }
 
+  bool _isUserHistoryKey(String key) =>
+      key.startsWith('chat_history_') &&
+      key != 'chat_history_guest' &&
+      key != _historyIndexKey;
+
   void _saveChatHistory() async {
     const storage = FlutterSecureStorage();
+    final historyKey = _getHistoryKey();
     final List<Map<String, dynamic>> toSave = _messages.map((msg) {
       return {
         'text': msg['text'],
@@ -110,7 +121,57 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
         'buildData': (msg['buildData'] as PcBuild?)?.toJson(),
       };
     }).toList();
-    await storage.write(key: _getHistoryKey(), value: jsonEncode(toSave));
+    await storage.write(key: historyKey, value: jsonEncode(toSave));
+    await _rememberHistoryKey(storage, historyKey);
+  }
+
+  Future<void> _rememberHistoryKey(
+    FlutterSecureStorage storage,
+    String historyKey,
+  ) async {
+    if (!_isUserHistoryKey(historyKey)) return;
+
+    final keys = await _readHistoryKeys(storage);
+
+    keys
+      ..remove(historyKey)
+      ..insert(0, historyKey);
+
+    final oldKeys = keys.length > _maxStoredUserHistories
+        ? keys.sublist(_maxStoredUserHistories)
+        : <String>[];
+
+    for (final oldKey in oldKeys) {
+      await storage.delete(key: oldKey);
+    }
+
+    await storage.write(
+      key: _historyIndexKey,
+      value: jsonEncode(keys.take(_maxStoredUserHistories).toList()),
+    );
+  }
+
+  Future<void> _forgetHistoryKey(
+    FlutterSecureStorage storage,
+    String historyKey,
+  ) async {
+    if (!_isUserHistoryKey(historyKey)) return;
+
+    final keys = await _readHistoryKeys(storage);
+    keys.remove(historyKey);
+    await storage.write(key: _historyIndexKey, value: jsonEncode(keys));
+  }
+
+  Future<List<String>> _readHistoryKeys(FlutterSecureStorage storage) async {
+    final rawIndex = await storage.read(key: _historyIndexKey);
+    if (rawIndex == null) return [];
+    try {
+      return (jsonDecode(rawIndex) as List<dynamic>)
+          .whereType<String>()
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   void _sendMessage() {
@@ -266,7 +327,9 @@ class ChatBotWidgetState extends State<ChatBotWidget> {
     await ApiService.deleteSession();
 
     const storage = FlutterSecureStorage();
-    await storage.delete(key: _getHistoryKey());
+    final historyKey = _getHistoryKey();
+    await storage.delete(key: historyKey);
+    await _forgetHistoryKey(storage, historyKey);
 
     _updateState(() {
       _isLoading = false;
